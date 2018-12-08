@@ -163,6 +163,10 @@ int MP1Node::finishUpThisNode(){
    /*
     * Your code goes here
     */
+    memberNode->~Member();
+
+    return 0;
+
 }
 
 /**
