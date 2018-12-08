@@ -80,6 +80,12 @@ There is a grader script Grader.sh that execute all configurations in testcases 
 ..* Multiple failures followed immediately by operations which should fail as quorum cannot be reached
 ..* Failures followed by a time for the system to re-stabilize, followed by operations that should succeed because the key has been re-replicated again at three nodes. For more information about the test, see the comments in Application.cpp starting at Line 232.
 
+---
+Warning
+---
+This is an experimental protocol implementation project and work-in-progress repo under heavy development. I do not yet recommend using in production environments.
+
+However, here are some idea to integrate this into real-world application: The MP has been designed for use of porting to a real distributed system. Start by changing the EmulNet layer and then perhaps using multithreading.
 
 ---
 Release History
