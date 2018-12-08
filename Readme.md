@@ -39,14 +39,12 @@ Each MP2Node should implement both the client-side as well as the server-side AP
 ### Logging
 
 The following functions in Log.h to log either successful or failed CRUD operations (this is how the grader will check for correctness of implementation):
-
-..* Log::logCreateSuccess, Log::logReadSuccess, Log::logUpdateSuccess, Log::logDeleteSuccess: Use these functions to log successful CRUD operations. 
-
-..* Log::logCreateFail, Log::logReadFail, Log::logUpdateFail, Log::logDeleteFail: Use these functions to log failed CRUD operations.
+1. Log::logCreateSuccess, Log::logReadSuccess, Log::logUpdateSuccess, Log::logDeleteSuccess: Use these functions to log successful CRUD operations. 
+2. Log::logCreateFail, Log::logReadFail, Log::logUpdateFail, Log::logDeleteFail: Use these functions to log failed CRUD operations.
 
 What nodes should log the messages ? 
-..* All replicas (non-faulty only) should log a success or a fail message for all the CRUD operations AND
-..* If the coordinator gets quorum number of successful replies then it should log a successful message, else it should log a failure message
+1. All replicas (non-faulty only) should log a success or a fail message for all the CRUD operations AND
+2. If the coordinator gets quorum number of successful replies then it should log a successful message, else it should log a failure message
 
 ---
 Usage
