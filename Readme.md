@@ -2,7 +2,7 @@
 
 Implementation of Fault-Tolerant Key-Value Store.
 
-The project was forked from from University of Illinois at Urbana-Champaign' [Cloud Computing Specialization](https://www.coursera.org/specializations/cloud-computing) programming assignment.
+The project was forked from University of Illinois at Urbana-Champaign' [Cloud Computing Specialization](https://www.coursera.org/specializations/cloud-computing) programming assignment.
 
 <img src="img/demo.jpg" width="480" alt="Combined Image" />
 
@@ -22,7 +22,7 @@ The project implements the following functionalities:
 Project Architecture
 ---
 
-Similar to [membership protocol](https://github.com/tranlyvu/membership-protocol) project, we are running on three-layer framework that will allow to run multiple copies of peers within one process running a single-threaded simulation engine. The three layers are 
+Similar to [membership protocol](https://github.com/tranlyvu/membership-protocol) project, we are running on three-layer framework that will allow to run multiple copies of peers within one process running a single-threaded simulation engine. The three layers are:
 1. The lower EmulNet (network)
 2. The middle layer including: MP1Node (membership protocol) and the MP2Node (the key-value store)
 3. The application layer.
@@ -31,9 +31,9 @@ Think of this like a three-layer protocol stack with App, P2P, and EmulNet as th
 
 <img src="img/key-value.JPG" width="480" alt="Combined Image" />
 
-Please note that the membership list may be stale at nodes! This models the reality in distributed systems. So, code that you write must be aware of this. Also, when you react to a failure (e.g., by re-replicating a key whose replica failed), make sure that there is no contention among the would-be replicas. Do not over-replicate keys!
+Please note that the membership list may be stale at nodes! This models the reality in distributed systems.  Also, when reacting to a failure (e.g., by re-replicating a key whose replica failed),there is no contention among the would-be replicas, i.e. no over-replicate keys.
 
-Each MP2Node should implement both the client-side as well as the server-side APIs for all the CRUD operations. The application layer chooses a non-faulty node randomly as the client. The same node can be considered as the coordinator. You can assume that the coordinator never crashes. Your Key-Value store should accept std::string as key and value.
+Each MP2Node implements both the client-side as well as the server-side APIs for all the CRUD operations. The application layer chooses a non-faulty node randomly as the client. The same node can be considered as the coordinator. You can assume that the coordinator never crashes. Your Key-Value store should accept std::string as key and value.
 
 ---
 ### Logging
