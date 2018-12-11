@@ -89,6 +89,7 @@ public:
 	void stabilizationProtocol();
 
 	~MP2Node();
+
 };
 
 #endif /* MP2NODE_H_ */

@@ -52,11 +52,18 @@ void MP2Node::updateRing() {
 	// Sort the list based on the hashCode
 	sort(curMemList.begin(), curMemList.end());
 
+	vector<Node> old_ring = ring;
+
+	ring = curMemList;
 
 	/*
 	 * Step 3: Run the stabilization protocol IF REQUIRED
 	 */
 	// Run stabilization protocol if the hash table size is greater than zero and if there has been a changed in the ring
+	if(ht->currentSize() > 0 || old_ring != ring){
+		stabilizationProtocol();
+	}
+
 }
 
 /**
@@ -111,6 +118,27 @@ void MP2Node::clientCreate(string key, string value) {
 	/*
 	 * Implement this
 	 */
+	// increase transaction ID before perform operation
+	g_transID += 1;
+	Message msg = Message(g_transID, memberNode->addr, READ, key);
+	
+	vector<Node> replicas = findNodes(key);
+
+	if (replicas.size() > 0) {
+		msg.replica = PRIMARY;
+		// use getAddress to return pointer
+		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (string)msg);
+	}
+
+	if (replicas.size() > 1) {
+		msg.replica = SECONDARY;
+		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (char *)msg, sizeof(Message));
+	}
+
+	if (replicas.size() > 2) {
+		msg.replica = Teritary;
+		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (char *)msg, sizeof(Message));
+	}
 }
 
 /**
@@ -126,6 +154,15 @@ void MP2Node::clientRead(string key){
 	/*
 	 * Implement this
 	 */
+	g_transID += 1;
+
+	
+	vector<Node> replicas = findNodes(key);
+
+	Message msg = Message(g_transID, memberNode->addr, READ, key, PRIMARY);
+	emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (char *)msg, sizeof(Message));
+
+	
 }
 
 /**
@@ -141,6 +178,14 @@ void MP2Node::clientUpdate(string key, string value){
 	/*
 	 * Implement this
 	 */
+	g_transID += 1;
+	Message msg = Message(g_transID, memberNode->addr, UPDATE, key, value);
+	
+	vector<Node> replicas = findNodes(key);
+
+	// for (auto it = replicas.begin(); it != replicas.end(); it++) {
+	// 	emulNet->ENsend(&memberNode->addr, &it->addr, (char *)msg, sizeof(Message));
+	// }
 }
 
 /**
@@ -156,6 +201,15 @@ void MP2Node::clientDelete(string key){
 	/*
 	 * Implement this
 	 */
+	g_transID += 1;
+	Message msg = Message(g_transID, memberNode->addr, DELETE, key);
+	
+	vector<Node> replicas = findNodes(key);
+
+	// for (auto it = replicas.begin(); it != replicas.end(); it++) {
+	// 	emulNet->ENsend(&memberNode->addr, &it->addr, (char *)msg, sizeof(Message));
+	// }
+
 }
 
 /**
@@ -171,6 +225,22 @@ bool MP2Node::createKeyValue(string key, string value, ReplicaType replica) {
 	 * Implement this
 	 */
 	// Insert key, value, replicaType into the hash table
+	g_transID += 1;
+	vector<Node> replicas = findNodes(key);
+	bool is_coordinator = false;
+
+	//for(auto it)
+
+	if (ht->create(key, value)) {
+		log->logCreateSuccess(&memberNode->addr, is_coordinator, g_transID, key, value);
+		return true;
+	} else {
+		log->logCreateFail(&memberNode->addr, is_coordinator, g_transID, key, value);
+		return false;
+	}
+
+
+
 }
 
 /**
@@ -329,3 +399,4 @@ void MP2Node::stabilizationProtocol() {
 	 * Implement this
 	 */
 }
+
