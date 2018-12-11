@@ -107,7 +107,7 @@ int MP1Node::initThisNode(Address *joinaddr) {
 	memberNode->heartbeat = 0;
 	memberNode->pingCounter = TFAIL;
 	memberNode->timeOutCounter = -1;
-    initMemberListTable(memberNode);
+    initMemberListTable(memberNode, id, port);
 
     return 0;
 }
