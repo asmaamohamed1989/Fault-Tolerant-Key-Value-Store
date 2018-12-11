@@ -163,10 +163,18 @@ int MP1Node::finishUpThisNode(){
    /*
     * Your code goes here
     */
-    memberNode->~Member();
+    if (memberNode->inited) {
+        memberNode->memberList.clear();
+        memberNode->inGroup = false;
+        memberNode->bFailed = true;
+        memberNode->nnb = 0;
+        memberNode->heartbeat = 0;
+        memberNode->pingCounter = 0;
+        memberNode->timeOutCounter = -1;
+        memberNode->inited = false;
+    }
 
     return 0;
-
 }
 
 /**
@@ -222,6 +230,51 @@ bool MP1Node::recvCallBack(void *env, char *data, int size ) {
 	/*
 	 * Your code goes here
 	 */
+
+#ifdef DEBUGLOG
+    static char s[1024];
+#endif
+
+    MessageHdr* source_message = (MessageHdr*) data;
+    Address *source_addr = (Address*)(source_message + 1);
+
+    data += sizeof(MessageHdr) + sizeof(Address) + 1;
+    long *received_heartbeat = (long*) data;
+
+    if (source_message->msgType == JOINREQ) {
+
+        // create JOINREP message: format of data is  {} MessageHdr Address heartbeat}
+        // read introduceSelfToGroup function to understand how to create message
+        MessageHdr* reply_message;
+        size_t message_size = sizeof(MessageHdr) + sizeof(memberNode->addr) + sizeof(long) + 1;
+        reply_message = (MessageHdr *) malloc(message_size * sizeof(char));
+
+        reply_message->msgType = JOINREP;
+
+        memcpy((char *)(reply_message+1), &memberNode->addr.addr, sizeof(memberNode->addr.addr));
+        memcpy((char *)(reply_message+1) + sizeof(memberNode->addr) + 1, 
+                        &memberNode->heartbeat, sizeof(long));
+
+#ifdef DEBUGLOG
+        sprintf(s, "Sending join_reply message to %d.%d.%d.%d:%d", source_addr->addr[0], source_addr->addr[1],
+                             source_addr->addr[2], source_addr->addr[3], *(short *)&source_addr->addr[4]);
+        log->LOG(&memberNode->addr, s);
+#endif
+
+        emulNet->ENsend(&(memberNode->addr), source_addr, (char *)reply_message, message_size);
+
+        free(reply_message);
+
+    } else if (source_message->msgType == JOINREP) {
+        // after receiving reply message
+        memberNode->inGroup = true;
+    } 
+
+    //update membership in all 3 cases: JOINREQ, JOINREP and HEARTBEAT
+    update_membership(source_addr, *received_heartbeat);
+
+    return true;
+
 }
 
 /**
@@ -236,6 +289,29 @@ void MP1Node::nodeLoopOps() {
 	/*
 	 * Your code goes here
 	 */
+
+    if (memberNode->pingCounter == 0) {
+        // Increment number of heartbeats
+        memberNode->heartbeat++;
+        send_heartbeat(&memberNode->addr, memberNode->heartbeat);       
+        memberNode->pingCounter = TFAIL;
+    } else {
+        memberNode->pingCounter--;
+    }    
+
+    // do not remove myself, the first node represent myself
+    for (vector<MemberListEntry>::iterator it = memberNode->memberList.begin()+1; it != memberNode->memberList.end();) {
+
+        if (par->getcurrtime() - it->gettimestamp() > TREMOVE) {
+            Address node_to_remove_addr;
+            memcpy(node_to_remove_addr.addr, &(it->id), sizeof(int));
+            memcpy(&node_to_remove_addr.addr[4], &(it->port), sizeof(short));  
+            log->logNodeRemove(&memberNode->addr, &node_to_remove_addr);    
+            it = memberNode->memberList.erase(it);
+        } else  {
+            ++it;
+        }
+    }
 
     return;
 }
@@ -269,8 +345,12 @@ Address MP1Node::getJoinAddress() {
  *
  * DESCRIPTION: Initialize the membership list
  */
-void MP1Node::initMemberListTable(Member *memberNode) {
+void MP1Node::initMemberListTable(Member *memberNode, int id, int port) {
 	memberNode->memberList.clear();
+
+    // add myself into the membership list
+    MemberListEntry myself = MemberListEntry(id, port, memberNode->heartbeat, par->getcurrtime());
+    memberNode->memberList.push_back(myself);
 }
 
 /**
@@ -282,4 +362,68 @@ void MP1Node::printAddress(Address *addr)
 {
     printf("%d.%d.%d.%d:%d \n",  addr->addr[0],addr->addr[1],addr->addr[2],
                                                        addr->addr[3], *(short*)&addr->addr[4]) ;    
+}
+
+
+/**
+ * FUNCTION NAME: update_membership
+ *
+ * DESCRIPTION: update heartbeat received from an adress and sent out to other member if this heartbeat is higher than original value
+ */
+void MP1Node::update_membership(Address* source_addr, long received_heartbeat) {
+
+    // update every member of list including myself
+    for (vector<MemberListEntry>::iterator it = memberNode->memberList.begin(); it != memberNode->memberList.end(); it++) {
+        Address a;
+        memcpy(a.addr, &(it->id), sizeof(int));
+        memcpy(&a.addr[4], &(it->port), sizeof(short));
+
+        //compare content
+        if (a == *source_addr) {
+            if (received_heartbeat > it->getheartbeat()) {
+                it->setheartbeat(received_heartbeat);
+                it->settimestamp(par->getcurrtime());
+
+                // IMPORTANT: send heartbeat to other member if we receive a higher heartbeat of a current member
+                send_heartbeat(source_addr, received_heartbeat);  
+            }
+           return;
+        }
+    }
+
+    // add new member if it is not in the list yet
+    MemberListEntry new_entry = MemberListEntry(*((int*)source_addr->addr),
+                                 *((short*)&(source_addr->addr[4])), received_heartbeat, par->getcurrtime());
+    memberNode->memberList.push_back(new_entry);  
+    log->logNodeAdd(&memberNode->addr, source_addr);  
+}
+
+/**
+ * FUNCTION NAME: send_heartbeat
+ *
+ * DESCRIPTION: send heartbeat to every members of list including myself
+ */
+void MP1Node::send_heartbeat(Address * source_addr, long heartbeat) {
+
+    MessageHdr* message;
+    size_t heartbeat_size = sizeof(MessageHdr) + sizeof(source_addr->addr) + sizeof(long) + 1;
+    message = (MessageHdr*) malloc(heartbeat_size * sizeof(char));
+
+    message->msgType = HEARTBEAT;
+
+     // read introduceSelfToGroup function to understand how to create message
+    memcpy((char *)(message+1), source_addr->addr, sizeof(source_addr->addr));
+    memcpy((char *)(message+1) + sizeof(source_addr->addr) + 1, &heartbeat, sizeof(long));
+
+    // send to every members of list including myself
+    for (vector<MemberListEntry>::iterator it = memberNode->memberList.begin(); it != memberNode->memberList.end(); it++) {
+        Address receiver_address;
+        memcpy(receiver_address.addr, &(it->id), sizeof(int));
+        memcpy(&receiver_address.addr[4], &(it->port), sizeof(short));
+        emulNet->ENsend(&memberNode->addr, &receiver_address, (char *)message, heartbeat_size);
+    }   
+
+   free(message);
+
+   return;
 }

@@ -31,7 +31,7 @@
 enum MsgTypes{
     JOINREQ,
     JOINREP,
-    DUMMYLASTMSGTYPE
+    HEARTBEAT
 };
 
 /**
@@ -64,8 +64,8 @@ public:
 	int recvLoop();
 	static int enqueueWrapper(void *env, char *buff, int size);
 	void nodeStart(char *servaddrstr, short serverport);
-	int initThisNode(Address *joinaddr);
-	int introduceSelfToGroup(Address *joinAddress);
+	int initThisNode(Address *addr);
+	int introduceSelfToGroup(Address *addr);
 	int finishUpThisNode();
 	void nodeLoop();
 	void checkMessages();
@@ -73,9 +73,12 @@ public:
 	void nodeLoopOps();
 	int isNullAddress(Address *addr);
 	Address getJoinAddress();
-	void initMemberListTable(Member *memberNode);
+	void initMemberListTable(Member *memberNode, int id, int port);
 	void printAddress(Address *addr);
 	virtual ~MP1Node();
+
+	void send_heartbeat(Address * source_addr, long heartbeat);
+	void update_membership(Address* source_addr, long received_heartbeat);
 };
 
 #endif /* _MP1NODE_H_ */
