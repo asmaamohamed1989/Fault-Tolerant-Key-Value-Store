@@ -80,16 +80,18 @@ public:
 	vector<Node> findNodes(string key);
 
 	// server
-	bool createKeyValue(string key, string value, ReplicaType replica);
+	bool createKeyValue(string key, string value, ReplicaType replica`, int transID);
 	string readKey(string key);
 	bool updateKeyValue(string key, string value, ReplicaType replica);
 	bool deletekey(string key);
 
 	// stabilization protocol - handle multiple failures
-	void stabilizationProtocol();
+	void stabilizationProtocol(vector<Node> ring);
 
 	~MP2Node();
 
+	bool ring_changed(vector<Node> ring1, vector<Node> ring2);
+	int is_present(Node node, vector<Node> list);
 };
 
 #endif /* MP2NODE_H_ */

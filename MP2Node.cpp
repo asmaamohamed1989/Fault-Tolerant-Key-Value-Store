@@ -52,17 +52,26 @@ void MP2Node::updateRing() {
 	// Sort the list based on the hashCode
 	sort(curMemList.begin(), curMemList.end());
 
-	vector<Node> old_ring = ring;
-
-	ring = curMemList;
 
 	/*
 	 * Step 3: Run the stabilization protocol IF REQUIRED
 	 */
-	// Run stabilization protocol if the hash table size is greater than zero and if there has been a changed in the ring
-	if(ht->currentSize() > 0 || old_ring != ring){
-		stabilizationProtocol();
+	// Run stabilization protocol if the hash table size is greater than zero and 
+	//if there has been a changed in the ring
+
+	bool is_ring_changes = false;
+	if (ring.size == 0) {
+		ring = curMemList;
+	} else {
+		is_ring_changes = ring_changed(ring, curMemList);
 	}
+
+	if (ht->currentSize() > 0 && is_ring_changes){
+		stabilizationProtocol(curMemList); // run stability protocol for curMemList
+		ring = curMemList;
+	}
+
+	sort(ring.begin(), ring.end());
 
 }
 
@@ -119,26 +128,29 @@ void MP2Node::clientCreate(string key, string value) {
 	 * Implement this
 	 */
 	// increase transaction ID before perform operation
+
 	g_transID += 1;
-	Message msg = Message(g_transID, memberNode->addr, READ, key);
+	Message msg = Message(g_transID, memberNode->addr, CREATE, key);
 	
 	vector<Node> replicas = findNodes(key);
 
 	if (replicas.size() > 0) {
 		msg.replica = PRIMARY;
 		// use getAddress to return pointer
-		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (string)msg);
+		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), msg.toString());
 	}
 
 	if (replicas.size() > 1) {
 		msg.replica = SECONDARY;
-		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (char *)msg, sizeof(Message));
+		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), msg.toString());
 	}
 
 	if (replicas.size() > 2) {
-		msg.replica = Teritary;
-		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (char *)msg, sizeof(Message));
+		msg.replica = TERTIARY;
+		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), msg.toString());
 	}
+
+	replicas.clear();
 }
 
 /**
@@ -154,13 +166,9 @@ void MP2Node::clientRead(string key){
 	/*
 	 * Implement this
 	 */
-	g_transID += 1;
 
-	
-	vector<Node> replicas = findNodes(key);
-
-	Message msg = Message(g_transID, memberNode->addr, READ, key, PRIMARY);
-	emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (char *)msg, sizeof(Message));
+	//Message msg = Message(g_transID, memberNode->addr, READ, key, PRIMARY);
+	//emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (string)msg);
 
 	
 }
@@ -178,11 +186,6 @@ void MP2Node::clientUpdate(string key, string value){
 	/*
 	 * Implement this
 	 */
-	g_transID += 1;
-	Message msg = Message(g_transID, memberNode->addr, UPDATE, key, value);
-	
-	vector<Node> replicas = findNodes(key);
-
 	// for (auto it = replicas.begin(); it != replicas.end(); it++) {
 	// 	emulNet->ENsend(&memberNode->addr, &it->addr, (char *)msg, sizeof(Message));
 	// }
@@ -201,10 +204,7 @@ void MP2Node::clientDelete(string key){
 	/*
 	 * Implement this
 	 */
-	g_transID += 1;
-	Message msg = Message(g_transID, memberNode->addr, DELETE, key);
-	
-	vector<Node> replicas = findNodes(key);
+
 
 	// for (auto it = replicas.begin(); it != replicas.end(); it++) {
 	// 	emulNet->ENsend(&memberNode->addr, &it->addr, (char *)msg, sizeof(Message));
@@ -220,27 +220,20 @@ void MP2Node::clientDelete(string key){
  * 			   	1) Inserts key value into the local hash table
  * 			   	2) Return true or false based on success or failure
  */
-bool MP2Node::createKeyValue(string key, string value, ReplicaType replica) {
+bool MP2Node::createKeyValue(string key, string value, ReplicaType replica, int transID) {
 	/*
 	 * Implement this
 	 */
 	// Insert key, value, replicaType into the hash table
-	g_transID += 1;
-	vector<Node> replicas = findNodes(key);
-	bool is_coordinator = false;
 
-	//for(auto it)
-
-	if (ht->create(key, value)) {
-		log->logCreateSuccess(&memberNode->addr, is_coordinator, g_transID, key, value);
-		return true;
+	bool create_success = ht->create(key, value)
+	if (create_success) {
+		log->logCreateSuccess(&memberNode->addr, false, transID, key, value);
 	} else {
-		log->logCreateFail(&memberNode->addr, is_coordinator, g_transID, key, value);
-		return false;
+		log->logCreateFail(&memberNode->addr, false, transID, key, value);
 	}
 
-
-
+	return create_success;
 }
 
 /**
@@ -321,6 +314,43 @@ void MP2Node::checkMessages() {
 		/*
 		 * Handle the message types here
 		 */
+		Message msg = Message(message);
+
+		if (msg.type == CREATE) {
+
+			bool is_success = createKeyValue(msg.key, msg.value, msg.replica, msg.transID);
+
+			nodes_have_key = findNodes(key);
+
+			ReplicaType replica_type = msg.type;
+
+			if (replica_type == PRIMARY){
+				
+				for (int i=1; i<=2; i++) {
+					if (is_present(nodes_have_key.at(i), hasMyReplicas == -1))
+						hasMyReplicas.emplace_back(nodes_have_key.at(i));
+				}
+
+			} else if (replica_type == SECONDARY) {
+
+				if (is_present(nodes_have_key.at(0), haveReplicasOf == -1)) {
+					haveReplicasOf.emplace_back(nodes_have_key.at(0));
+				}
+
+			} else{
+
+				for (int i=1; i<=2; i++) {
+					if (is_present(nodes_have_key.at(i), haveReplicasOf) == -1)
+						haveReplicasOf.emplace_back(nodes_have_key.at(i));
+				}
+			}
+
+			Message reply_message = Message(msg.transID, memberNode->addr, REPLY, is_success);
+
+			emulNet->ENsend(&memberNode->addr, &msg.fromAddr, rep_message.toString());
+		}
+
+
 
 	}
 
@@ -386,17 +416,122 @@ int MP2Node::enqueueWrapper(void *env, char *buff, int size) {
 	return q.enqueue((queue<q_elt> *)env, (void *)buff, size);
 }
 /**
- * FUNCTION NAME: stabilizationProtocol
+ * FUNCTION NAME: stabilizationProtocol -some nodes fails and some joins 
+ 					meaning that the membership list changes
+ 				 as time goes on, so, for example, if a node fails then a replica count for some key-value
+ 				  decreases and thus you need to add one more replica for that key-value. Some node may join, 
+ 				so in that case you need kind of rearrange you ring. This process is called "stabilization".
  *
  * DESCRIPTION: This runs the stabilization protocol in case of Node joins and leaves
  * 				It ensures that there always 3 copies of all keys in the DHT at all times
  * 				The function does the following:
- *				1) Ensures that there are three "CORRECT" replicas of all the keys in spite of failures and joins
- *				Note:- "CORRECT" replicas implies that every key is replicated in its two neighboring nodes in the ring
+ *				1) Ensures that there are three "CORRECT" replicas of all the keys in spite of failures 
+ *				and joins
+ *				Note:- "CORRECT" replicas implies that every key is replicated in its two neighboring
+ *				 nodes in the ring
  */
-void MP2Node::stabilizationProtocol() {
+void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 	/*
 	 * Implement this
 	 */
+
+	Node myself = Node(memberNode->addr);
+	int my_pos = find_pos(myself, new_ring);
+	int 1st_replica_pos = (my_pos + 1) % list.size();
+	int 2nd_repica_pos = (my_pos + 2) % list.size();
+
+	if (hasMyReplicas.size() == 0) {
+		update_key_in_replica(new_ring, new_ring[1st_replica_pos], SECONDARY);
+		update_key_in_replica(new_ring, new_ring[2nd_replica_pos], TERTIARY);
+	
+	} else {
+		if (!(ring_to_stabilize(1st_replica_pos).nodeAddress == hasMyReplicas[0].nodeAddress)){
+			// remove key from old SECONDARY node and update new one
+			delete_keys_in_replica(new_ring, hasMyReplicas[0]);
+			update_keys_in_replica(new_ring, new_ring[1st_replica_pos], SECONDARY);
+		}
+
+		if (!(ring_to_stabilize(2nd_replica_pos).nodeAddress == hasMyReplicas[0].nodeAddress)){
+			// remove key from old SECONDARY node and update new one
+			delete_keys_in_replica(new_ring, hasMyReplicas[0]);
+			update_keys_in_replica(new_ring, new_ring[2nd_replica_pos], TERTIARY);
+		}		
+	}
+
+	int 1st_predecessor_pos = (my_pos + new_ring.size() - 1) % list.size();
+	int 2nd_predecessor_pos = (my_pos + new_ring.size() - 2) % list.size();
+
+	// // if current node is not replica of previous 2 nodes in virtual ring then do nothing, just wait to update
+	// if (haveReplicasOf.size() != 0) {
+
+	// 	if(!(new_ring(1st_predecessor_pos).nodeAddress == haveReplicasOf[0].nodeAddress)) {
+	// 		update_keys_in_replica(ring_to_stabilize, ring_to_stabilize[1st_replica_pos], TERTIARY);
+
+
+	// 	}
+
+	// }
+
+
+
+
+
+	hasMyReplicas.clear();
+	haveReplicasOf.clear();
+	hasMyReplicas.push_back(newRing[1st_replica_pos]);
+	hasMyReplicas.push_back(newRing[2nd_replica_pos]);
+	haveReplicasOf.push_back(newRing[1st_predecessor_pos]);
+	haveReplicasOf.push_back(newRing[2nd_predecessor_pos])
+
+
 }
+
+void MP2Node::stabilizationProtocol2(vector<Node> new_ring) {
+	
+	vector<Node> failed_nodes;
+
+	for(auto it = new_ring.begin(); it != new_ring.end(); ++it) {
+		
+		if(is_present(*it, new_ring) !=1)
+			failed_nodes.emplace_back(Node((*it).nodeAddress));
+	}
+
+	Node myself = Node(memberNode->addr);
+	int my_pos = find_pos(myself, new_ring);
+	int 1st_replica_pos = (my_pos + 1) % list.size();
+	int 2nd_repica_pos = (my_pos + 2) % list.size();
+
+	string key;
+	string value;
+	Entry new_entry;
+
+	for(auto it = failed_nodes.begin(); it < failed_nodes.end(); ++it) {
+		if(is_presence(*it, haveReplicasOf)) {
+
+			if (haveReplicasOf.at(0).nodeHashCode == *it.getHashCode) {
+				for (ht_it = ht->hashTable.begin(); ht_it != ht->hashTable.end(); ++ht_it) {
+					key = ht_it->first;
+					value = ht_it->second;
+					new_entry = Entry(value);
+					if (new_entry->replica == SECONDARY) {
+						Message reply_msg = new Message(transactionID, fromAddr, CREATE, key, entryobj->value, TERTIARY);
+					}
+				}	
+			}
+		}
+	}
+}
+
+
+int MP2Node::is_present(Node node, std::vector<Node> list) {
+
+	for (int i = 0; i<list.size(); i++) {
+		if (node.nodeHashCode == list[i].nodeHashCode)
+			return i;
+	}
+	return -1;
+}
+
+
+
 
