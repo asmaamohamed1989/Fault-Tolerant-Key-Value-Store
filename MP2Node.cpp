@@ -514,7 +514,10 @@ void MP2Node::stabilizationProtocol2(vector<Node> new_ring) {
 					value = ht_it->second;
 					new_entry = Entry(value);
 					if (new_entry->replica == SECONDARY) {
-						Message reply_msg = new Message(transactionID, fromAddr, CREATE, key, entryobj->value, TERTIARY);
+						g_transID += 1;
+						Message reply_msg = new Message(g_transID, memberNode->addr, CREATE, key, new_entry->value, TERTIARY);
+	
+						emulNet->ENsend(&memberNode->addr, &new_ring.at(2nd_replica_pos).nodeAddress, rep_message);
 					}
 				}	
 			}

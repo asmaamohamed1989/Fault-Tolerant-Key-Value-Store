@@ -90,7 +90,6 @@ public:
 
 	~MP2Node();
 
-	bool ring_changed(vector<Node> ring1, vector<Node> ring2);
 	int is_present(Node node, vector<Node> list);
 };
 
