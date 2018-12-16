@@ -1,6 +1,6 @@
 # **Fault-Tolerant Key-Value Store**
 
-Building a Fault-Tolerant Key-Value Store on nodes running membership protocol.
+Building a distributed Fault-Tolerant Key-Value Store on nodes running membership protocol.
 
 The project was forked from University of Illinois at Urbana-Champaign' [Cloud Computing Specialization](https://www.coursera.org/specializations/cloud-computing) programming assignment.
 
