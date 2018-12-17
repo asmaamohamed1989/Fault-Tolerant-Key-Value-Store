@@ -76,29 +76,15 @@ public:
 	// coordinator dispatches messages to corresponding nodes
 	void dispatchMessages(Message message);
 
-	// find the addresses of nodes that are responsible for a key
-<<<<<<< HEAD
-	vector<Node> findNodes(string key);
-
-	// server
-	bool createKeyValue(string key, string value, ReplicaType replica);
-=======
 	vector<Node> findNodes(string key, std::vector<Node> ring);
 
 	// server
-	bool createKeyValue(string key, string value, ReplicaType replica, int transID);
->>>>>>> Add initial project files
 	string readKey(string key);
+	bool createKeyValue(string key, string value, ReplicaType replica);
 	bool updateKeyValue(string key, string value, ReplicaType replica);
 	bool deletekey(string key);
 
 	// stabilization protocol - handle multiple failures
-<<<<<<< HEAD
-	void stabilizationProtocol();
-
-	~MP2Node();
-
-=======
 	void stabilizationProtocol(vector<Node> ring);
 
 	~MP2Node();
@@ -106,7 +92,6 @@ public:
 	int find_position(Node node, vector<Node> list);
 	void update_replica(int transID, Address addr, string key, string value, MessageType message_type, ReplicaType replica_type);
 
->>>>>>> Add initial project files
 };
 
 #endif /* MP2NODE_H_ */

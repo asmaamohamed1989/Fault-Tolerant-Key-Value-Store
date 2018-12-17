@@ -56,23 +56,18 @@ void MP2Node::updateRing() {
 	// Sort the list based on the hashCode
 	sort(curMemList.begin(), curMemList.end());
 
-<<<<<<< HEAD
 	vector<Node> old_ring = ring;
 
 	ring = curMemList;
-=======
->>>>>>> Add initial project files
 
 	/*
 	 * Step 3: Run the stabilization protocol IF REQUIRED
 	 */
-<<<<<<< HEAD
 	// Run stabilization protocol if the hash table size is greater than zero and if there has been a changed in the ring
 	if(ht->currentSize() > 0 || old_ring != ring){
 		stabilizationProtocol();
 	}
 
-=======
 	// Run stabilization protocol if the hash table size is greater than zero and 
 	//if there has been a changed in the ring
 
@@ -90,7 +85,6 @@ void MP2Node::updateRing() {
 
 	sort(ring.begin(), ring.end());
 
->>>>>>> Add initial project files
 }
 
 /**
@@ -146,40 +140,25 @@ void MP2Node::clientCreate(string key, string value) {
 	 * Implement this
 	 */
 	// increase transaction ID before perform operation
-<<<<<<< HEAD
 	g_transID += 1;
 	Message msg = Message(g_transID, memberNode->addr, READ, key);
 	
 	vector<Node> replicas = findNodes(key);
-=======
 
 	g_transID += 1;
 	Message msg = Message(g_transID, memberNode->addr, CREATE, key);
 	
 	vector<Node> replicas = findNodes(key, ring);
->>>>>>> Add initial project files
 
 	if (replicas.size() > 0) {
 		msg.replica = PRIMARY;
 		// use getAddress to return pointer
-<<<<<<< HEAD
-		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (string)msg);
-=======
+
 		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), msg.toString());
->>>>>>> Add initial project files
 	}
 
 	if (replicas.size() > 1) {
 		msg.replica = SECONDARY;
-<<<<<<< HEAD
-		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (char *)msg, sizeof(Message));
-	}
-
-	if (replicas.size() > 2) {
-		msg.replica = Teritary;
-		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (char *)msg, sizeof(Message));
-	}
-=======
 		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), msg.toString());
 	}
 
@@ -189,7 +168,6 @@ void MP2Node::clientCreate(string key, string value) {
 	}
 
 	replicas.clear();
->>>>>>> Add initial project files
 }
 
 /**
@@ -205,19 +183,7 @@ void MP2Node::clientRead(string key){
 	/*
 	 * Implement this
 	 */
-<<<<<<< HEAD
-	g_transID += 1;
 
-	
-	vector<Node> replicas = findNodes(key);
-
-	Message msg = Message(g_transID, memberNode->addr, READ, key, PRIMARY);
-	emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (char *)msg, sizeof(Message));
-=======
-
-	//Message msg = Message(g_transID, memberNode->addr, READ, key, PRIMARY);
-	//emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (string)msg);
->>>>>>> Add initial project files
 
 	
 }
@@ -235,17 +201,7 @@ void MP2Node::clientUpdate(string key, string value){
 	/*
 	 * Implement this
 	 */
-<<<<<<< HEAD
-	g_transID += 1;
-	Message msg = Message(g_transID, memberNode->addr, UPDATE, key, value);
-	
-	vector<Node> replicas = findNodes(key);
 
-=======
->>>>>>> Add initial project files
-	// for (auto it = replicas.begin(); it != replicas.end(); it++) {
-	// 	emulNet->ENsend(&memberNode->addr, &it->addr, (char *)msg, sizeof(Message));
-	// }
 }
 
 /**
@@ -261,18 +217,7 @@ void MP2Node::clientDelete(string key){
 	/*
 	 * Implement this
 	 */
-<<<<<<< HEAD
-	g_transID += 1;
-	Message msg = Message(g_transID, memberNode->addr, DELETE, key);
-	
-	vector<Node> replicas = findNodes(key);
-=======
 
->>>>>>> Add initial project files
-
-	// for (auto it = replicas.begin(); it != replicas.end(); it++) {
-	// 	emulNet->ENsend(&memberNode->addr, &it->addr, (char *)msg, sizeof(Message));
-	// }
 
 }
 
@@ -284,21 +229,16 @@ void MP2Node::clientDelete(string key){
  * 			   	1) Inserts key value into the local hash table
  * 			   	2) Return true or false based on success or failure
  */
-<<<<<<< HEAD
 bool MP2Node::createKeyValue(string key, string value, ReplicaType replica) {
-=======
-bool MP2Node::createKeyValue(string key, string value, ReplicaType replica, int transID) {
->>>>>>> Add initial project files
+
 	/*
 	 * Implement this
 	 */
 	// Insert key, value, replicaType into the hash table
-<<<<<<< HEAD
 	g_transID += 1;
 	vector<Node> replicas = findNodes(key);
 	bool is_coordinator = false;
 
-	//for(auto it)
 
 	if (ht->create(key, value)) {
 		log->logCreateSuccess(&memberNode->addr, is_coordinator, g_transID, key, value);
@@ -308,19 +248,6 @@ bool MP2Node::createKeyValue(string key, string value, ReplicaType replica, int 
 		return false;
 	}
 
-
-
-=======
-
-	bool create_success = ht->create(key, value)
-	if (create_success) {
-		log->logCreateSuccess(&memberNode->addr, false, transID, key, value);
-	} else {
-		log->logCreateFail(&memberNode->addr, false, transID, key, value);
-	}
-
-	return create_success;
->>>>>>> Add initial project files
 }
 
 /**
@@ -401,8 +328,7 @@ void MP2Node::checkMessages() {
 		/*
 		 * Handle the message types here
 		 */
-<<<<<<< HEAD
-=======
+
 		Message msg = Message(message);
 
 		if (msg.type == CREATE) {
@@ -439,9 +365,6 @@ void MP2Node::checkMessages() {
 			emulNet->ENsend(&memberNode->addr, &msg.fromAddr, rep_message.toString());
 		}
 
-
->>>>>>> Add initial project files
-
 	}
 
 	/*
@@ -456,11 +379,8 @@ void MP2Node::checkMessages() {
  * DESCRIPTION: Find the replicas of the given keyfunction
  * 				This function is responsible for finding the replicas of a key
  */
-<<<<<<< HEAD
-vector<Node> MP2Node::findNodes(string key) {
-=======
+
 vector<Node> MP2Node::findNodes(string key, std::vector<Node> ring) {
->>>>>>> Add initial project files
 	size_t pos = hashFunction(key);
 	vector<Node> addr_vec;
 	if (ring.size() >= 3) {
@@ -527,15 +447,15 @@ int MP2Node::enqueueWrapper(void *env, char *buff, int size) {
  *				1) Ensures that there are three "CORRECT" replicas of all the keys in spite of failures and joins
  *				Note:- "CORRECT" replicas implies that every key is replicated in its two neighboring nodes in the ring
  */
-void MP2Node::stabilizationProtocol() {
-	/*
-	 * Implement this
-	 */
-=======
- *				1) Ensures that there are three "CORRECT" replicas of all the keys in spite of failures 
- *				and joins
- *				Note:- "CORRECT" replicas implies that every key is replicated in its two neighboring
- *				 nodes in the ring
+// void MP2Node::stabilizationProtocol() {
+// 	/*
+// 	 * Implement this
+// 	 */
+
+ // *				1) Ensures that there are three "CORRECT" replicas of all the keys in spite of failures 
+ // *				and joins
+ // *				Note:- "CORRECT" replicas implies that every key is replicated in its two neighboring
+ // *				 nodes in the ring
 //  */
 // void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 // 	/*
@@ -633,7 +553,7 @@ void MP2Node::stabilizationProtocol() {
 
 // }
 
-void MP2Node::stabilizationProtocol2(vector<Node> new_ring) {
+void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 
 	for (auto it=ht->hashTable.begin(); it != ht->HashTable.end(); ++it) {
 
@@ -746,6 +666,5 @@ void MP2Node::update_replica(int transID, Address addr, string key, string value
 	
 	Message message = Message(transID, memberNode->addr, message_type, key, value, replica_type);
 	emulNet->ENsend(&memberNode->addr, &addr, message.toString());
->>>>>>> Add initial project files
 }
 
