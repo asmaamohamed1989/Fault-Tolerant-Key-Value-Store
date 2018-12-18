@@ -76,11 +76,14 @@ public:
 	// coordinator dispatches messages to corresponding nodes
 	void dispatchMessages(Message message);
 
-	vector<Node> findNodes(string key, std::vector<Node> ring);
+	// find the addresses of nodes that are responsible for a key
+	vector<Node> findNodes(string key);
+
+	vector<Node> findNodes(string key, std::vector<Node> list);
 
 	// server
+	bool createKeyValue(string key, string value, ReplicaType replica, int transID);
 	string readKey(string key);
-	bool createKeyValue(string key, string value, ReplicaType replica);
 	bool updateKeyValue(string key, string value, ReplicaType replica);
 	bool deletekey(string key);
 
@@ -90,8 +93,9 @@ public:
 	~MP2Node();
 
 	int find_position(Node node, vector<Node> list);
+	int find_position(Address addr, vector<Node> list);
 	void update_replica(int transID, Address addr, string key, string value, MessageType message_type, ReplicaType replica_type);
-
+	bool ring_changed(std::vector<Node> ring1, vector<Node> ring2);
 };
 
 #endif /* MP2NODE_H_ */
