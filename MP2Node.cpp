@@ -134,23 +134,9 @@ void MP2Node::clientCreate(string key, string value) {
 	
 	vector<Node> replicas = findNodes(key);
 
-	if (replicas.size() > 0) {
-		msg.replica = PRIMARY;
-		// use getAddress to return pointer
-		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), msg.toString());
-	}
+	send_message(msg);
 
-	if (replicas.size() > 1) {
-		msg.replica = SECONDARY;
-		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), msg.toString());
-	}
-
-	if (replicas.size() > 2) {
-		msg.replica = TERTIARY;
-		emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), msg.toString());
-	}
-
-	replicas.clear();
+	free(message);
 }
 
 /**
@@ -166,11 +152,12 @@ void MP2Node::clientRead(string key){
 	/*
 	 * Implement this
 	 */
+	g_transID += 1;
 
-	//Message msg = Message(g_transID, memberNode->addr, READ, key, PRIMARY);
-	//emulNet->ENsend(&memberNode->addr, replicas[0].getAddress(), (string)msg);
-
+	Message *msg = Message(g_transID, memberNode->addr, READ, key);
 	
+	send_message(msg);
+	free(message);
 }
 
 /**
@@ -186,9 +173,12 @@ void MP2Node::clientUpdate(string key, string value){
 	/*
 	 * Implement this
 	 */
-	// for (auto it = replicas.begin(); it != replicas.end(); it++) {
-	// 	emulNet->ENsend(&memberNode->addr, &it->addr, (char *)msg, sizeof(Message));
-	// }
+	g_transID += 1;
+
+	Message *msg = Message(g_transID, memberNode->addr, UPDATE, key, value);
+	
+	send_message(msg);
+	free(message);
 }
 
 /**
@@ -205,10 +195,12 @@ void MP2Node::clientDelete(string key){
 	 * Implement this
 	 */
 
+	g_transID += 1;
 
-	// for (auto it = replicas.begin(); it != replicas.end(); it++) {
-	// 	emulNet->ENsend(&memberNode->addr, &it->addr, (char *)msg, sizeof(Message));
-	// }
+	Message *msg = Message(g_transID, memberNode->addr, DELETE, key);
+	
+	send_message(msg);
+	free(msg);
 
 }
 
@@ -226,14 +218,17 @@ bool MP2Node::createKeyValue(string key, string value, ReplicaType replica, int 
 	 */
 	// Insert key, value, replicaType into the hash table
 
-	bool create_success = ht->create(key, value);
-	if (create_success) {
+	Entry* entry = new Entry(value, par->getcurrtime(), replica);
+
+	bool is_success = ht->create(key, entry->convertToString());
+
+	if (is_success) {
 		log->logCreateSuccess(&memberNode->addr, false, transID, key, value);
 	} else {
 		log->logCreateFail(&memberNode->addr, false, transID, key, value);
 	}
 
-	return create_success;
+	return is_success;
 }
 
 /**
@@ -244,11 +239,21 @@ bool MP2Node::createKeyValue(string key, string value, ReplicaType replica, int 
  * 			    1) Read key from local hash table
  * 			    2) Return value
  */
-string MP2Node::readKey(string key) {
+string MP2Node::readKey(string key, int transID) {
 	/*
 	 * Implement this
 	 */
 	// Read key from local hash table and return value
+
+	string value = ht->read(key, entry->convertToString());
+	
+	if (create_success) {
+		log->logReadSuccess(&memberNode->addr, false, transID, key, value);
+	} else {
+		log->logCreateFail(&memberNode->addr, false, transID, key);
+	}
+
+	return value;
 }
 
 /**
@@ -259,11 +264,23 @@ string MP2Node::readKey(string key) {
  * 				1) Update the key to the new value in the local hash table
  * 				2) Return true or false based on success or failure
  */
-bool MP2Node::updateKeyValue(string key, string value, ReplicaType replica) {
+bool MP2Node::updateKeyValue(string key, string value, ReplicaType replica, int transID) {
 	/*
 	 * Implement this
 	 */
 	// Update key in local hash table and return true or false
+
+	Entry* entry = new Entry(value, par->getcurrtime(), replica);
+
+	bool is_sucess = ht->update(key, entry->convertToString());
+	
+	if (is_sucess) {
+		log->logUpdateSuccess(&memberNode->addr, false, transID, key, value);
+	} else {
+		log->logUpdateFail(&memberNode->addr, false, transID, key, value);
+	}
+
+	return is_sucess;
 }
 
 /**
@@ -274,11 +291,22 @@ bool MP2Node::updateKeyValue(string key, string value, ReplicaType replica) {
  * 				1) Delete the key from the local hash table
  * 				2) Return true or false based on success or failure
  */
-bool MP2Node::deletekey(string key) {
+bool MP2Node::deletekey(string key, int transID) {
 	/*
 	 * Implement this
 	 */
 	// Delete the key from the local hash table
+
+	bool is_sucess = ht->deleteKey(key);
+	
+	if (is_sucess) {
+		log->logDeleteSuccess(&memberNode->addr, false, transID, key);
+	} else {
+		log->logDeleteFail(&memberNode->addr, false, transID, key);
+	}
+
+	return is_sucess;
+
 }
 
 /**
@@ -314,19 +342,23 @@ void MP2Node::checkMessages() {
 		/*
 		 * Handle the message types here
 		 */
-		Message msg = Message(message);
+		Message* msg = new Message(message);
+		MessageType msg_type = msg->type;
+		bool is_success; 
+		Message* reply_message;
+		int reply_transID = msg->transID;
 
-		if (msg.type == CREATE) {
+		if (msg_type == CREATE) {
 
-			bool is_success = createKeyValue(msg.key, msg.value, msg.replica, msg.transID);
+			is_success = createKeyValue(msg->key, msg->value, msg->replica, reply_transID);
+			vector<Node> nodes_have_key = findNodes(msg->key);
 
-			std::vector<Node> nodes_have_key = findNodes(msg.key, ring);
-
-			ReplicaType replica_type = msg.replica;
+			ReplicaType replica_type = msg->replica;
 
 			if (replica_type == PRIMARY){
 				
-				for (int i=1; i<=2; i++) {
+				// add nodes into hasmyreplica
+				for (int i=1; i <= 2; i++) {
 					if (find_position(nodes_have_key.at(i), hasMyReplicas) == -1)
 						hasMyReplicas.emplace_back(nodes_have_key.at(i));
 				}
@@ -337,7 +369,11 @@ void MP2Node::checkMessages() {
 					haveReplicasOf.emplace_back(nodes_have_key.at(0));
 				}
 
-			} else{
+				if (find_position(nodes_have_key.at(2), hasMyReplicas) == -1) {
+					hasMyReplicas.emplace_back(nodes_have_key.at(0));
+				}			
+
+			} else {
 
 				for (int i=1; i<=2; i++) {
 					if (find_position(nodes_have_key.at(i), haveReplicasOf) == -1)
@@ -345,17 +381,49 @@ void MP2Node::checkMessages() {
 				}
 			}
 
-			Message reply_message = Message(msg.transID, memberNode->addr, REPLY, is_success);
+			reply_message = new Message(reply_transID , memberNode->addr, REPLY, is_success);
+			emulNet->ENsend(&memberNode->addr, &msg->fromAddr, reply_message->toString());
+		
+		} else if (msg_type == DELETE) {
 
-			emulNet->ENsend(&memberNode->addr, &msg.fromAddr, reply_message.toString());
+			is_success = deletekey(msg->key, msg->transID);
+			reply_message = new Message(reply_transID, memberNode->addr, REPLY, is_success);
+			emulNet->ENsend(&memberNode->addr, &msg->fromAddr, reply_message->toString());
+		
+		} else if (msg_type == READ) {
+
+			string value = readKey(msg->key, reply_transID);
+
+			// reply message of read is different from others
+			reply_message = new Message(reply_transID, memberNode->addr, value);
+			emulNet->ENsend(&memberNode->addr, &msg->fromAddr, reply_message->toString());
+			
+		} else if (msg_type == UPDATE) {
+
+			// update message has replica type
+			is_success = updateKeyValue(msg->key, msg->value, msg->replica, reply_transID);
+			reply_message = new Message(reply_transID, memberNode->addr, REPLY, is_success);
+			emulNet->ENsend(&memberNode->addr, &msg->fromAddr, reply_message->toString());			
+		
+		} else if (msg_type == REPLY) {
+
+			// get the success from reply message
+			is_success = msg->success;
+
 		}
-	}
 
+
+		free(reply_message);
+		free(msg);
+
+	} 
 
 	/*
 	 * This function should also ensure all READ and UPDATE operation
 	 * get QUORUM replies
 	 */
+
+	
 }
 
 /**
@@ -493,7 +561,7 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 			// the key is primary in this node
 
 			// step 1: update this key as primary to myself
-			update_replica(g_transID, memberNode->addr, key, value, CREATE, PRIMARY);
+			update_replica(g_transID, memberNode->addr, key, value, UPDATE, PRIMARY);
 
 			// Step 2: create this key as SECONDARY to next replica
 			if (!(old_replicas_of_key.at(1).nodeAddress == new_replicas_of_key.at(1).nodeAddress))
@@ -517,7 +585,7 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 				// the key is secondary in this node
 
 				// step 1: update this key as SECONDARY to myself
-				update_replica(g_transID, memberNode->addr, key, value, CREATE, SECONDARY);
+				update_replica(g_transID, memberNode->addr, key, value, UPDATE, SECONDARY);
 
 				// Step 2: create this key as TERTIARY to next replica
 				if (!(old_replicas_of_key.at(1).nodeAddress == new_replicas_of_key.at(1).nodeAddress)) {

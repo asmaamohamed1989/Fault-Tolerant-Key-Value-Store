@@ -79,19 +79,20 @@ public:
 	// find the addresses of nodes that are responsible for a key
 	vector<Node> findNodes(string key);
 
-	vector<Node> findNodes(string key, std::vector<Node> list);
+	vector<Node> findNodes(string key, vector<Node> list);
 
 	// server
 	bool createKeyValue(string key, string value, ReplicaType replica, int transID);
-	string readKey(string key);
-	bool updateKeyValue(string key, string value, ReplicaType replica);
-	bool deletekey(string key);
+	string readKey(string key, int transID);
+	bool updateKeyValue(string key, string value, ReplicaType replica, int transID);
+	bool deletekey(string key, int transID);
 
 	// stabilization protocol - handle multiple failures
 	void stabilizationProtocol(vector<Node> ring);
 
 	~MP2Node();
 
+	void send_message(Message *msg);
 	int find_position(Node node, vector<Node> list);
 	int find_position(Address addr, vector<Node> list);
 	void update_replica(int transID, Address addr, string key, string value, MessageType message_type, ReplicaType replica_type);
