@@ -113,7 +113,7 @@ For new feature contribution, please follow the following instruction:
 
 `$ git checkout dev && git pull`
 
-4. Create your feature/bug-fix branch (
+4. Create your feature/bug-fix branch
 
 `$ git checkout -b <feature/bug>/<branch-name>`
 
