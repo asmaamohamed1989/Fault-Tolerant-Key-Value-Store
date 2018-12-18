@@ -123,9 +123,9 @@ For new feature contribution, please follow the following instruction:
 
 6. Push to the branch 
 
-`$ git push origin new/your-feature`
+`$ git push`
 
-7. Go to your own repo and create a new Pull Request
+7. Go to your own repo and create a new Pull Request against 'dev' branch
 
 ---
 Contact
