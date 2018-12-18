@@ -107,23 +107,23 @@ For new feature contribution, please follow the following instruction:
 
 2. Clone from your own repo
 
-`$git clone https://github.com/<your name>/Fault-Tolerant-Key-Value-Store.git`
+`$ git clone https://github.com/<your name>/Fault-Tolerant-Key-Value-Store.git`
 
 3. Make sure you are at dev branch 
 
-`$git checkout dev && git pull`
+`$ git checkout dev && git pull`
 
 4. Create your feature/bug-fix branch (
 
-`$git checkout -b <feature/bug>/<branch-name>`
+`$ git checkout -b <feature/bug>/<branch-name>`
 
 5. Commit your changes 
 
-`git commit -am 'Add some new feature'`
+`$ git commit -am 'Add some new feature'`
 
 6. Push to the branch 
 
-`git push origin new/your-feature`
+`$ git push origin new/your-feature`
 
 7. Go to your own repo and create a new Pull Request
 
