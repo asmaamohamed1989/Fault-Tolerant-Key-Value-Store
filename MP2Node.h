@@ -92,7 +92,6 @@ public:
 
 	~MP2Node();
 
-	void send_message(Message *msg);
 	int find_position(Node node, vector<Node> list);
 	int find_position(Address addr, vector<Node> list);
 	void update_replica(int transID, Address addr, string key, string value, MessageType message_type, ReplicaType replica_type);

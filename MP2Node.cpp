@@ -39,7 +39,6 @@ void MP2Node::updateRing() {
 	 * Implement this. Parts of it are already implemented
 	 */
 	vector<Node> curMemList;
-	bool change = false;
 
 	/*
 	 *  Step 1. Get the current membership list from Membership Protocol / MP1
@@ -130,13 +129,16 @@ void MP2Node::clientCreate(string key, string value) {
 	// increase transaction ID before perform operation
 
 	g_transID += 1;
-	Message *msg = new Message(g_transID, memberNode->addr, CREATE, key);
+	Message* send_msg = new Message(g_transID, memberNode->addr, CREATE, key, value);
 	
 	vector<Node> replicas = findNodes(key);
 
-	send_message(msg);
+	for (int i = 0; i < 3; i++) {
+		send_msg->replica = ReplicaType(i);
+		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), send_msg->toString());
+	}
 
-	free(message);
+	free(send_msg);
 }
 
 /**
@@ -154,10 +156,10 @@ void MP2Node::clientRead(string key){
 	 */
 	g_transID += 1;
 
-	Message *msg = Message(g_transID, memberNode->addr, READ, key);
-	
-	send_message(msg);
-	free(message);
+	Message *send_msg = new Message(g_transID, memberNode->addr, READ, key);
+	vector<Node> replicas = findNodes(key);
+	emulNet->ENsend(&(send_msg->fromAddr), &(replicas[0].nodeAddress), send_msg->toString());
+	free(send_msg);
 }
 
 /**
@@ -175,10 +177,15 @@ void MP2Node::clientUpdate(string key, string value){
 	 */
 	g_transID += 1;
 
-	Message *msg = Message(g_transID, memberNode->addr, UPDATE, key, value);
-	
-	send_message(msg);
-	free(message);
+	Message* send_msg = new Message(g_transID, memberNode->addr, UPDATE, key, value);
+	std::vector<Node> replicas = findNodes(key);
+
+	for (int i = 0; i < 3; i++) {
+		send_msg->replica = ReplicaType(i);
+		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), send_msg->toString());
+	}
+
+	free(send_msg);
 }
 
 /**
@@ -197,11 +204,14 @@ void MP2Node::clientDelete(string key){
 
 	g_transID += 1;
 
-	Message *msg = Message(g_transID, memberNode->addr, DELETE, key);
-	
-	send_message(msg);
-	free(msg);
+	Message* send_msg = new Message(g_transID, memberNode->addr, DELETE, key);
+	std::vector<Node> replicas = findNodes(key);
 
+	for (int i = 0; i < 3; i++) {
+		send_msg->replica = ReplicaType(i);
+		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), send_msg->toString());
+	}
+	free(send_msg);
 }
 
 /**
@@ -244,13 +254,13 @@ string MP2Node::readKey(string key, int transID) {
 	 * Implement this
 	 */
 	// Read key from local hash table and return value
-
-	string value = ht->read(key, entry->convertToString());
 	
-	if (create_success) {
+	string value = ht->read(key);
+	
+	if (value != "") {
 		log->logReadSuccess(&memberNode->addr, false, transID, key, value);
 	} else {
-		log->logCreateFail(&memberNode->addr, false, transID, key);
+		log->logReadFail(&memberNode->addr, false, transID, key);
 	}
 
 	return value;
@@ -410,10 +420,10 @@ void MP2Node::checkMessages() {
 			// get the success from reply message
 			is_success = msg->success;
 
+		} else if (msg_type == READREPLY) {
+			string reply_value = msg->value;
+
 		}
-
-
-		free(reply_message);
 		free(msg);
 
 	} 
@@ -444,7 +454,7 @@ vector<Node> MP2Node::findNodes(string key) {
 		}
 		else {
 			// go through the ring until pos <= node
-			for (int i=1; i<ring.size(); i++){
+			for (unsigned i=1; i<ring.size(); i++){
 				Node addr = ring.at(i);
 				if (pos <= addr.getHashCode()) {
 					addr_vec.emplace_back(addr);
@@ -476,7 +486,7 @@ vector<Node> MP2Node::findNodes(string key, std::vector<Node> ring) {
 		}
 		else {
 			// go through the ring until pos <= node
-			for (int i=1; i<ring.size(); i++){
+			for (unsigned i=1; i<ring.size(); i++){
 				Node addr = ring.at(i);
 				if (pos <= addr.getHashCode()) {
 					addr_vec.emplace_back(addr);
@@ -578,8 +588,8 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 			int new_2nd_predecessor_pos = (new_pos + new_ring.size() - 2) % new_ring.size();
 
 			int old_pos = find_position(memberNode->addr, ring);		
-			int old_1st_predecessor_pos = (pos + ring.size() - 1) % ring.size();
-			int old_2nd_predecessor_pos = (pos + ring.size() - 2) % ring.size();
+			int old_1st_predecessor_pos = (old_pos + ring.size() - 1) % ring.size();
+			int old_2nd_predecessor_pos = (old_pos + ring.size() - 2) % ring.size();
 
 			if (pos == 1) {
 				// the key is secondary in this node
@@ -631,7 +641,7 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 
 int MP2Node::find_position(Node node, std::vector<Node> list) {
 
-	for (int i = 0; i<list.size(); i++) {
+	for (unsigned i = 0; i<list.size(); i++) {
 		if (node.nodeHashCode == list[i].nodeHashCode)
 			return i;
 	}
@@ -640,7 +650,7 @@ int MP2Node::find_position(Node node, std::vector<Node> list) {
 
 int MP2Node::find_position(Address addr, std::vector<Node> list) {
 
-	for (int i = 0; i<list.size(); i++) {
+	for (unsigned i = 0; i<list.size(); i++) {
 		if (addr == list[i].nodeAddress)
 			return i;
 	}
@@ -670,4 +680,5 @@ bool MP2Node::ring_changed(std::vector<Node> ring1, std::vector<Node> ring2) {
 
 	return false;
 }
+
 
