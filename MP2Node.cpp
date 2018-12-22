@@ -130,12 +130,15 @@ void MP2Node::clientCreate(string key, string value) {
 
 	g_transID += 1;
 	Message* send_msg = new Message(g_transID, memberNode->addr, CREATE, key, value);
-	
+	string message = send_msg->toString();
+
+	operation_table[g_transID] = message;
+
 	vector<Node> replicas = findNodes(key);
 
 	for (int i = 0; i < 3; i++) {
 		send_msg->replica = ReplicaType(i);
-		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), send_msg->toString());
+		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), message);
 	}
 
 	free(send_msg);
@@ -158,7 +161,11 @@ void MP2Node::clientRead(string key){
 
 	Message *send_msg = new Message(g_transID, memberNode->addr, READ, key);
 	vector<Node> replicas = findNodes(key);
-	emulNet->ENsend(&(send_msg->fromAddr), &(replicas[0].nodeAddress), send_msg->toString());
+	string message = send_msg->toString();
+
+	operation_table[g_transID] = message;
+
+	emulNet->ENsend(&(send_msg->fromAddr), &(replicas[0].nodeAddress), message);
 	free(send_msg);
 }
 
@@ -178,11 +185,15 @@ void MP2Node::clientUpdate(string key, string value){
 	g_transID += 1;
 
 	Message* send_msg = new Message(g_transID, memberNode->addr, UPDATE, key, value);
+	string message = send_msg->toString();
+
+	operation_table[g_transID] = message;
+
 	std::vector<Node> replicas = findNodes(key);
 
 	for (int i = 0; i < 3; i++) {
 		send_msg->replica = ReplicaType(i);
-		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), send_msg->toString());
+		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), message);
 	}
 
 	free(send_msg);
@@ -205,11 +216,15 @@ void MP2Node::clientDelete(string key){
 	g_transID += 1;
 
 	Message* send_msg = new Message(g_transID, memberNode->addr, DELETE, key);
+	string message = send_msg->toString();
+
+	operation_table[g_transID] = message;
+
 	std::vector<Node> replicas = findNodes(key);
 
 	for (int i = 0; i < 3; i++) {
 		send_msg->replica = ReplicaType(i);
-		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), send_msg->toString());
+		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), message);
 	}
 	free(send_msg);
 }
@@ -337,6 +352,11 @@ void MP2Node::checkMessages() {
 	/*
 	 * Declare your local variables here
 	 */
+	Message* msg;
+	Message* reply_message;
+	MessageType msg_type;
+	bool is_success; 
+	int reply_transID;
 
 	// dequeue all messages and handle them
 	while ( !memberNode->mp2q.empty() ) {
@@ -352,11 +372,9 @@ void MP2Node::checkMessages() {
 		/*
 		 * Handle the message types here
 		 */
-		Message* msg = new Message(message);
-		MessageType msg_type = msg->type;
-		bool is_success; 
-		Message* reply_message;
-		int reply_transID = msg->transID;
+		msg = new Message(message);
+		msg_type = msg->type;
+		reply_transID = msg->transID;
 
 		if (msg_type == CREATE) {
 
@@ -420,20 +438,43 @@ void MP2Node::checkMessages() {
 			// get the success from reply message
 			is_success = msg->success;
 
+			// key already present
+			if (result_table.find(reply_transID) != result_table.end()) {
+				result_table[reply_transID].emplace_back(is_success);
+			} else { // key not present yet
+				vector<bool> new_result;
+				new_result.emplace_back(is_success);
+				result_table[reply_transID] = new_result;
+			}
+
 		} else if (msg_type == READREPLY) {
 			string reply_value = msg->value;
 
+			// key already present
+			if (read_value_table.find(reply_transID) != read_value_table.end()) {
+				read_value_table[reply_transID].emplace_back(reply_value);
+			} else { // key not present yet
+				vector<string> new_value;
+				new_value.emplace_back(reply_value);
+				read_value_table[reply_transID] = new_value;
+			}
 		}
-		free(msg);
+		
+	} // end of while loop
 
-	} 
+	free(msg);
+	free(reply_message);
 
 	/*
 	 * This function should also ensure all READ and UPDATE operation
 	 * get QUORUM replies
 	 */
 
-	
+	/*checking quorum for UPDATE, DELETE and CREATE operation*/
+	check_update_operations();
+
+	/*checking quorum for READ operation*/
+	check_read_operations();
 }
 
 /**
@@ -639,7 +680,7 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 }
 
 
-int MP2Node::find_position(Node node, std::vector<Node> list) {
+int MP2Node::find_position(Node node, vector<Node> list) {
 
 	for (unsigned i = 0; i<list.size(); i++) {
 		if (node.nodeHashCode == list[i].nodeHashCode)
@@ -648,7 +689,7 @@ int MP2Node::find_position(Node node, std::vector<Node> list) {
 	return -1;
 }
 
-int MP2Node::find_position(Address addr, std::vector<Node> list) {
+int MP2Node::find_position(Address addr, vector<Node> list) {
 
 	for (unsigned i = 0; i<list.size(); i++) {
 		if (addr == list[i].nodeAddress)
@@ -665,7 +706,7 @@ void MP2Node::update_replica(int transID, Address addr, string key, string value
 	emulNet->ENsend(&memberNode->addr, &addr, message.toString());
 }
 
-bool MP2Node::ring_changed(std::vector<Node> ring1, std::vector<Node> ring2) {
+bool MP2Node::ring_changed(vector<Node> ring1, vector<Node> ring2) {
 
 	if (ring1.size() != ring2.size()) 
 		return true;
@@ -679,6 +720,118 @@ bool MP2Node::ring_changed(std::vector<Node> ring1, std::vector<Node> ring2) {
 	}
 
 	return false;
+}
+
+void MP2Node::check_read_operations() {
+	Message* received_msg;
+	Entry *entryObj;
+	string reply_value;
+	int reply_transID;
+	Address reply_from;
+
+	if (read_value_table.size() > 0) {
+
+		for (auto it = read_value_table.begin(); it != read_value_table.end(); ++it) {
+
+			reply_transID = it->first;
+
+			if (operation_table.find(reply_transID) != operation_table.end()) {		
+
+				received_msg = new Message(operation_table[reply_transID]);
+				reply_from = received_msg->fromAddr;
+				vector<string> value_received_from_read = read_value_table[reply_transID];
+
+				vector<string> values;
+				for (auto it=value_received_from_read.begin(); it!=value_received_from_read .end(); ++it) {
+					if (*it != "") {
+						entryObj = new Entry(*it);
+						values.push_back(entryObj->value);
+					} else
+						values.push_back("");			
+				}
+				
+				reply_value = "";
+				vector<string> value2;
+				for (auto it=value_received_from_read.begin(); it != value_received_from_read.end(); ++it) {
+					if (*it != "") {
+						entryObj = new Entry(*it);
+						value2.push_back(entryObj->value);
+					}			
+				}				
+				if (value2.size() != 0)
+					reply_value = value2.at(0);
+				
+
+				int counter = 0;
+				for (unsigned i = 0; i < values.size(); i++) {
+					if (values[i] == reply_value)
+						counter += 1;	
+				}
+
+				if (received_msg->type == READ) {
+					if (counter > 1 && reply_value != "") {
+						log->logReadSuccess(&reply_from, true, reply_transID, received_msg->key, reply_value);
+					} else {
+						log->logReadFail(&reply_from, true, reply_transID, received_msg->key);
+					}
+				}
+
+			}
+		}	
+	}
+	//free(entryObj);
+	//free(received_msg);
+	read_value_table.clear();
+}
+
+void MP2Node::check_update_operations() {
+	Message* received_msg;
+	int reply_transID;
+	MessageType msg_type;
+	Address reply_from;
+
+	if (result_table.size() > 0) {
+
+		for (auto it = result_table.begin(); it != result_table.end(); ++it) {
+			reply_transID = it->first;
+
+			if (operation_table.find(reply_transID) != operation_table.end()) {
+				
+				received_msg = new Message(operation_table[reply_transID]);
+				msg_type =  received_msg->type;
+				reply_from = received_msg->fromAddr;
+
+				vector<bool> received_success_message = result_table[reply_transID];
+				int counter = 0;
+				for (unsigned i=0; i < received_success_message.size(); i++) {
+					if (received_success_message[i] == true)
+						counter += 1;
+				}
+
+				if (msg_type == CREATE) {
+					if (counter > 1)
+						log->logCreateSuccess(&reply_from, true, reply_transID, received_msg->key, received_msg->value);
+					else
+						log->logCreateFail(&reply_from, true, reply_transID, received_msg->key, received_msg->value);
+				
+				} else if (msg_type == UPDATE) {
+					if (counter > 1)
+						log->logUpdateSuccess(&reply_from, true, reply_transID, received_msg->key, received_msg->value);
+					else
+						log->logUpdateFail(&reply_from, true, reply_transID, received_msg->key, received_msg->value);
+				
+				} else if (msg_type == DELETE) {
+					if (counter > 1)
+						log->logDeleteSuccess(&reply_from, true, reply_transID, received_msg->key);
+					else
+						log->logDeleteFail(&reply_from, true, reply_transID, received_msg->key);
+				}
+
+			}
+		}
+	}
+	//free(received_msg);
+	result_table.clear();
 }
 
 

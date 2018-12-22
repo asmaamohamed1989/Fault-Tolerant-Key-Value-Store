@@ -48,6 +48,10 @@ private:
 	// Object of Log
 	Log * log;
 
+	map<int, vector<bool>> result_table;
+	map<int, string> operation_table;
+	map<int, vector<string>> read_value_table;
+
 public:
 	MP2Node(Member *memberNode, Params *par, EmulNet *emulNet, Log *log, Address *addressOfMember);
 	Member * getMemberNode() {
@@ -96,6 +100,8 @@ public:
 	int find_position(Address addr, vector<Node> list);
 	void update_replica(int transID, Address addr, string key, string value, MessageType message_type, ReplicaType replica_type);
 	bool ring_changed(std::vector<Node> ring1, vector<Node> ring2);
+	void check_read_operations();
+	void check_update_operations();
 };
 
 #endif /* MP2NODE_H_ */
