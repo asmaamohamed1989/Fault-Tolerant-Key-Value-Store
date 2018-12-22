@@ -459,11 +459,12 @@ void MP2Node::checkMessages() {
 				read_value_table[reply_transID] = new_value;
 			}
 		}
+		free(msg);
+		//free(reply_message);
 		
 	} // end of while loop
 
-	free(msg);
-	free(reply_message);
+
 
 	/*
 	 * This function should also ensure all READ and UPDATE operation
@@ -775,12 +776,13 @@ void MP2Node::check_read_operations() {
 						log->logReadFail(&reply_from, true, reply_transID, received_msg->key);
 					}
 				}
-
+				free(entryObj);
+				free(received_msg);
 			}
 		}	
 	}
-	//free(entryObj);
-	//free(received_msg);
+	
+	
 	read_value_table.clear();
 }
 
@@ -826,11 +828,11 @@ void MP2Node::check_update_operations() {
 					else
 						log->logDeleteFail(&reply_from, true, reply_transID, received_msg->key);
 				}
-
+				free(received_msg);
 			}
 		}
 	}
-	//free(received_msg);
+	
 	result_table.clear();
 }
 
