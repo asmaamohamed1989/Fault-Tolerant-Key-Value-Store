@@ -1,4 +1,4 @@
-# **Fault-Tolerant Key-Value Store**
+# **Building Fault-Tolerant Key-Value Store**
 
 Building a distributed Fault-Tolerant Key-Value Store on nodes running membership protocol.
 
@@ -84,16 +84,19 @@ There is a grader script Grader.sh that execute all configurations in testcases 
 Real-world application
 ---
 
-This is an experimental protocol implementation project and work-in-progress repo under heavy development. I do not yet recommend using in production environments.
+This is an experimental implementation project and under heavy development, I do not yet recommend using in production environments.
 
-However, here are some idea to integrate this into real-world application: The MP has been designed for use of porting to a real distributed system. Start by changing the EmulNet layer and then perhaps using multithreading.
+However, here are some ideas to integrate this into real-world application: The MP has been designed for use of porting to a real distributed system. Start by changing the EmulNet layer and then perhaps using multithreading.
 
 ---
 Release History
 ---
 
-* v1.0.0
+* v1.0.0 (23 Dec 2018)
     * First official release
+    * Supported CRUD operations
+    * Provided client and server API
+    * To to: fix update operation - correct value being updated at least in quorum of replicas
 
 ---
 Contribution
