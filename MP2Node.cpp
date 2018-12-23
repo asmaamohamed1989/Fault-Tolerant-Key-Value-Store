@@ -858,8 +858,6 @@ void MP2Node::check_update_operations() {
 		}
 		result_table.clear();
 	}
-	
-	
 }
 
 
