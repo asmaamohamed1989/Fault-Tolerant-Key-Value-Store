@@ -1,6 +1,6 @@
-# **Fault-Tolerant Key-Value Store**
+# **Building Fault-Tolerant Key-Value Store**
 
-Implementation of Fault-Tolerant Key-Value Store on nodes running membership protocol.
+Building a distributed Fault-Tolerant Key-Value Store on nodes running membership protocol.
 
 The project was forked from University of Illinois at Urbana-Champaign' [Cloud Computing Specialization](https://www.coursera.org/specializations/cloud-computing) programming assignment.
 
@@ -84,16 +84,19 @@ There is a grader script Grader.sh that execute all configurations in testcases 
 Real-world application
 ---
 
-This is an experimental protocol implementation project and work-in-progress repo under heavy development. I do not yet recommend using in production environments.
+This is an experimental implementation project and under heavy development, I do not yet recommend using in production environments.
 
-However, here are some idea to integrate this into real-world application: The MP has been designed for use of porting to a real distributed system. Start by changing the EmulNet layer and then perhaps using multithreading.
+However, here are some ideas to integrate this into real-world application: The MP has been designed for use of porting to a real distributed system. Start by changing the EmulNet layer and then perhaps using multithreading.
 
 ---
 Release History
 ---
 
-* v1.0.0
+* v1.0.0 (23 Dec 2018)
     * First official release
+    * Supported CRUD operations
+    * Provided client and server API
+    * To to: fix update operation - correct value being updated at least in quorum of replicas
 
 ---
 Contribution
@@ -103,13 +106,29 @@ Contributions are welcome! For bug reports or requests please submit an [issue](
 
 For new feature contribution, please follow the following instruction:
 
-```
-1. Fork the repo (https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store.git
-2. Create your feature branch (`git checkout -b new/your-feature`)
-3. Commit your changes (`git commit -am 'Add some new feature'`)
-4. Push to the branch (`git push origin new/your-feature`)
-5. Create a new Pull Request at https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/pulls
-```
+1. Fork the repo https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store.git to your own github
+
+2. Clone from your own repo
+
+`$ git clone https://github.com/<your name>/Fault-Tolerant-Key-Value-Store.git`
+
+3. Make sure you are at dev branch 
+
+`$ git checkout dev && git pull`
+
+4. Create your feature/bug-fix branch
+
+`$ git checkout -b <feature/bug>/<branch-name>`
+
+5. Commit your changes 
+
+`$ git commit -am 'Add some new feature'`
+
+6. Push to the branch 
+
+`$ git push`
+
+7. Go to your own repo and create a new Pull Request against 'dev' branch
 
 ---
 Contact
