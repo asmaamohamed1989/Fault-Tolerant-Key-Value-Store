@@ -96,7 +96,7 @@ Release History
     * First official release
     * Supported CRUD operations
     * Provided client and server API
-    * To to: fix update operation - correct value being updated at least in quorum of replicas
+    * To to: fix stabilization protocol
     * To do: fix segmentation fault
 
 ---
