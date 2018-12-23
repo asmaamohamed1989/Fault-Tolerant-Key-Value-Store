@@ -612,8 +612,9 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
         	send_message(g_transID, new_replicas_of_key.at(1).nodeAddress, key, value, CREATE, SECONDARY);
         	
         	g_transID += 1;
-        	send_message(g_transID, new_replicas_of_key.at(2).nodeAddress, key, value, CREATE ,TERTIARY);
-        	
+        	send_message(g_transID, new_replicas_of_key.at(2).nodeAddress, key, value, CREATE, TERTIARY);
+
+       	
         	// delete the key from my self but do not delete others as they will self-deleted
         	ht->deleteKey(key);
 
@@ -626,13 +627,27 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 
 
 			// Step 2: create this key as SECONDARY to next replica
-			if (!(old_replicas_of_key.at(1).nodeAddress == new_replicas_of_key.at(1).nodeAddress)) {
+			// case 1: update old tertiary to secondary
+
+			if (new_replicas_of_key.at(1).nodeAddress == old_replicas_of_key.at(2).nodeAddress) {
+				g_transID += 1;
+				send_message(g_transID, old_replicas_of_key.at(2).nodeAddress, key, value, UPDATE, SECONDARY);					
+
+			// case 2: create new secondary	
+			} else if (!(old_replicas_of_key.at(1).nodeAddress == new_replicas_of_key.at(1).nodeAddress)) {
 				g_transID += 1;
 				send_message(g_transID, new_replicas_of_key.at(1).nodeAddress, key, value, CREATE, SECONDARY);
 			}
 			
 			// Step 3: create this key as TERTIARY to next replica
-			if (!(old_replicas_of_key.at(2).nodeAddress == new_replicas_of_key.at(2).nodeAddress)) {
+
+			// case 1: update old secondary to teriary
+			if (new_replicas_of_key.at(2).nodeAddress == old_replicas_of_key.at(1).nodeAddress) {
+				g_transID += 1;
+				send_message(g_transID, old_replicas_of_key.at(1).nodeAddress, key, value, UPDATE, TERTIARY);	
+
+			// case 2: create new TERTIARY			
+			}  else if (!(old_replicas_of_key.at(2).nodeAddress == new_replicas_of_key.at(2).nodeAddress)) {
 				g_transID += 1;
 				send_message(g_transID, new_replicas_of_key.at(2).nodeAddress, key, value, CREATE, TERTIARY);
 			}
@@ -668,6 +683,7 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 				if (!(old_1st_predecessor_addr == new_1st_predecessor_addr)) {
 					g_transID += 1;
 					send_message(g_transID, new_1st_predecessor_addr, key, value, CREATE, PRIMARY);
+
 				}	
 				
 			} else if (pos == 2) {
@@ -686,13 +702,13 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 					send_message(g_transID, new_2nd_predecessor_addr, key, value, CREATE, PRIMARY);
 				}
 
-				// step 3: create this key as PRIMARY to 2nd predecessor
+				// step 3: create this key as secondary to 2nd predecessor
 				Address old_1st_predecessor_addr = 	ring.at(old_1st_predecessor_pos).nodeAddress;
 				Address new_1st_predecessor_addr = new_ring.at(new_1st_predecessor_pos).nodeAddress;
 				
 				if (!(old_1st_predecessor_addr == new_1st_predecessor_addr)) {
 					g_transID += 1;
-					send_message(g_transID, new_1st_predecessor_addr, key, value, CREATE, PRIMARY);
+					send_message(g_transID, new_1st_predecessor_addr, key, value, CREATE, SECONDARY);
 				}
 
 			}
@@ -705,10 +721,15 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 
 void MP2Node::send_message(int transID, Address to_addr, string key, string value, MessageType message_type, ReplicaType replica_type) {
 	
-	if (message_type == CREATE) {
-		Message message = Message(transID, memberNode->addr, message_type, key, value, replica_type);
-		emulNet->ENsend(&memberNode->addr, &to_addr, message.toString());		
-	}
+
+	if (message_type == CREATE || message_type == UPDATE) {
+		Message* send_msg = new Message(transID, memberNode->addr, message_type, key, value, replica_type);
+		emulNet->ENsend(&memberNode->addr, &to_addr, send_msg->toString());		
+
+	} else if (message_type == DELETE) {
+		Message* send_msg = new Message(transID, memberNode->addr, DELETE, key);
+		emulNet->ENsend(&memberNode->addr, &to_addr, send_msg->toString());	
+	} 
 }
 
 int MP2Node::find_position(Node node, vector<Node> list) {
