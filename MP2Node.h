@@ -86,9 +86,9 @@ public:
 	vector<Node> findNodes(string key, vector<Node> list);
 
 	// server
-	bool createKeyValue(string key, string value, ReplicaType replica, int transID);
+	bool createKeyValue(string key, string value, ReplicaType replica, int transID, Address from_addr);
 	string readKey(string key, int transID);
-	bool updateKeyValue(string key, string value, ReplicaType replica, int transID);
+	bool updateKeyValue(string key, string value, ReplicaType replica, int transID, Address from_addr);
 	bool deletekey(string key, int transID);
 
 	// stabilization protocol - handle multiple failures
