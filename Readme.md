@@ -97,6 +97,7 @@ Release History
     * Supported CRUD operations
     * Provided client and server API
     * To to: fix update operation - correct value being updated at least in quorum of replicas
+    * TO do: fix segmentation fault
 
 ---
 Contribution
