@@ -33,7 +33,7 @@ Think of this like a three-layer protocol stack with App, P2P, and EmulNet as th
 
 Please note that the membership list may be stale at nodes! This models the reality in distributed systems.  Also, when reacting to a failure (e.g., by re-replicating a key whose replica failed),there is no contention among the would-be replicas, i.e. no over-replicate keys.
 
-Each MP2Node implements both the client-side as well as the server-side APIs for all the CRUD operations. The application layer chooses a non-faulty node randomly as the client. The same node can be considered as the coordinator. You can assume that the coordinator never crashes. Your Key-Value store should accept std::string as key and value.
+Each MP2Node implements both the client-side as well as the server-side APIs for all the CRUD operations. The application layer chooses a non-faulty node randomly as the client. The same node can be considered as the coordinator. The coordinator is assumed to be never crashed. The Key-Value store accepts std::string as key and value.
 
 ---
 ### Logging
@@ -42,7 +42,7 @@ The following functions in Log.h to log either successful or failed CRUD operati
 1. Log::logCreateSuccess, Log::logReadSuccess, Log::logUpdateSuccess, Log::logDeleteSuccess: Use these functions to log successful CRUD operations. 
 2. Log::logCreateFail, Log::logReadFail, Log::logUpdateFail, Log::logDeleteFail: Use these functions to log failed CRUD operations.
 
-What nodes should log the messages ? 
+What nodes should log the messages? 
 1. All replicas (non-faulty only) should log a success or a fail message for all the CRUD operations AND
 2. If the coordinator gets quorum number of successful replies then it should log a successful message, else it should log a failure message
 
@@ -97,7 +97,7 @@ Release History
     * Supported CRUD operations
     * Provided client and server API
     * To to: fix update operation - correct value being updated at least in quorum of replicas
-    * TO do: fix segmentation fault
+    * To do: fix segmentation fault
 
 ---
 Contribution
