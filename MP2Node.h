@@ -98,7 +98,7 @@ public:
 
 	int find_position(Node node, vector<Node> list);
 	int find_position(Address addr, vector<Node> list);
-	void update_replica(int transID, Address addr, string key, string value, MessageType message_type, ReplicaType replica_type);
+	void send_message(int transID, Address addr, string key, string value, MessageType message_type, ReplicaType replica_type);
 	bool ring_changed(std::vector<Node> ring1, vector<Node> ring2);
 	void check_read_operations();
 	void check_update_operations();

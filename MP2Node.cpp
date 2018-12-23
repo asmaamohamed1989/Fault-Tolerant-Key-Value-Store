@@ -163,10 +163,9 @@ void MP2Node::clientRead(string key){
 
 	operation_table[g_transID] = message;
 
-	//emulNet->ENsend(&(send_msg->fromAddr), &(replicas[0].nodeAddress), message);
 	vector<Node> replicas = findNodes(key);
 	for (int i = 0; i < 3; i++) {
-		send_msg->replica = ReplicaType(i);
+		// when sending read message, dont have to specify replica type
 		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), message);
 	}
 }
@@ -185,15 +184,15 @@ void MP2Node::clientUpdate(string key, string value){
 	 * Implement this
 	 */
 	g_transID += 1;
-
-	Message* send_msg = new Message(g_transID, memberNode->addr, UPDATE, key, value);
+	Address from_addr = memberNode->addr;
+	Message* send_msg = new Message(g_transID, from_addr, UPDATE, key, value);
 	string message = send_msg->toString();
 	operation_table[g_transID] = message;
-	std::vector<Node> replicas = findNodes(key);
+	vector<Node> replicas = findNodes(key);
 
 	for (int i = 0; i < 3; i++) {
 		send_msg->replica = ReplicaType(i);
-		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), message);
+		emulNet->ENsend(&from_addr, &(replicas[i].nodeAddress), message);
 	}
 
 }
@@ -213,17 +212,17 @@ void MP2Node::clientDelete(string key){
 	 */
 
 	g_transID += 1;
+	Address from_addr = memberNode->addr;
 
-	Message* send_msg = new Message(g_transID, memberNode->addr, DELETE, key);
+	Message* send_msg = new Message(g_transID, from_addr, DELETE, key);
 	string message = send_msg->toString();
 
 	operation_table[g_transID] = message;
 
 	std::vector<Node> replicas = findNodes(key);
-
 	for (int i = 0; i < 3; i++) {
-		send_msg->replica = ReplicaType(i);
-		emulNet->ENsend(&(send_msg->fromAddr), &(replicas[i].nodeAddress), message);
+		// when sending DELETE message, dont have to specify replica type
+		emulNet->ENsend(&from_addr, &(replicas[i].nodeAddress), message);
 	}
 }
 
@@ -266,8 +265,8 @@ string MP2Node::readKey(string key, int transID) {
 	 * Implement this
 	 */
 	// Read key from local hash table and return value
-	
-	string value = ht->read(key);
+	string value = "";
+	value = ht->read(key);
 	
 	if (value != "") {
 		log->logReadSuccess(&memberNode->addr, false, transID, key, value);
@@ -437,10 +436,8 @@ void MP2Node::checkMessages() {
 			is_success = msg->success;
 
 			// key already present
-			if (result_table.find(reply_transID) != result_table.end()) {
-				vector<bool> new_value = result_table[reply_transID];
-				new_value.push_back(is_success);		
-				result_table[reply_transID] = new_value;
+			if (result_table.find(reply_transID) != result_table.end()) {	
+				result_table[reply_transID].emplace_back(is_success);
 
 			} else { // key not present yet
 				vector<bool> new_result;
@@ -448,14 +445,12 @@ void MP2Node::checkMessages() {
 				result_table[reply_transID] = new_result;
 			}
 
-		} else if (msg_type == READREPLY) {
+		} else { // read reply
 			string reply_value = msg->value;
 
 			// key already present
 			if (read_value_table.find(reply_transID) != read_value_table.end()) {
-				vector<string> new_value = read_value_table[reply_transID];
-				new_value.push_back(reply_value);
-				read_value_table[reply_transID] = new_value;
+				read_value_table[reply_transID].emplace_back(reply_value);
 
 			} else { // key not present yet
 				vector<string> new_value;
@@ -463,7 +458,7 @@ void MP2Node::checkMessages() {
 				read_value_table[reply_transID] = new_value;
 			}
 		}
-		//free(msg);		
+				
 	} // end of while loop
 
 	/*
@@ -597,14 +592,18 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 	        	pos = i;
 	    }
 	    
-	    g_transID += 1;
-
+	    
 		if (pos == -1) {
 
 			// the key does not belong to this node anymore
-			update_replica(g_transID, new_replicas_of_key.at(0).nodeAddress, key, value, CREATE, PRIMARY);
-        	update_replica(g_transID, new_replicas_of_key.at(1).nodeAddress, key, value, CREATE, SECONDARY);
-        	update_replica(g_transID, new_replicas_of_key.at(2).nodeAddress, key, value, CREATE ,TERTIARY);
+			g_transID += 1;
+			send_message(g_transID, new_replicas_of_key.at(0).nodeAddress, key, value, CREATE, PRIMARY);
+        	
+        	g_transID += 1;
+        	send_message(g_transID, new_replicas_of_key.at(1).nodeAddress, key, value, CREATE, SECONDARY);
+        	
+        	g_transID += 1;
+        	send_message(g_transID, new_replicas_of_key.at(2).nodeAddress, key, value, CREATE ,TERTIARY);
         	
         	// delete the key from my self but do not delete others as they will self-deleted
         	ht->deleteKey(key);
@@ -613,15 +612,21 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 			// the key is primary in this node
 
 			// step 1: update this key as primary to myself
-			update_replica(g_transID, memberNode->addr, key, value, UPDATE, PRIMARY);
+			g_transID +=1;
+			updateKeyValue(key, value, PRIMARY, g_transID, memberNode->addr);
+
 
 			// Step 2: create this key as SECONDARY to next replica
-			if (!(old_replicas_of_key.at(1).nodeAddress == new_replicas_of_key.at(1).nodeAddress))
-				update_replica(g_transID, new_replicas_of_key.at(1).nodeAddress, key, value, CREATE,SECONDARY);
+			if (!(old_replicas_of_key.at(1).nodeAddress == new_replicas_of_key.at(1).nodeAddress)) {
+				g_transID += 1;
+				send_message(g_transID, new_replicas_of_key.at(1).nodeAddress, key, value, CREATE, SECONDARY);
+			}
 			
 			// Step 3: create this key as TERTIARY to next replica
-			if (!(old_replicas_of_key.at(2).nodeAddress == new_replicas_of_key.at(2).nodeAddress))
-				update_replica(g_transID, new_replicas_of_key.at(2).nodeAddress, key, value, CREATE, TERTIARY);
+			if (!(old_replicas_of_key.at(2).nodeAddress == new_replicas_of_key.at(2).nodeAddress)) {
+				g_transID += 1;
+				send_message(g_transID, new_replicas_of_key.at(2).nodeAddress, key, value, CREATE, TERTIARY);
+			}
 		
 		} else {
 
@@ -637,11 +642,14 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 				// the key is secondary in this node
 
 				// step 1: update this key as SECONDARY to myself
-				update_replica(g_transID, memberNode->addr, key, value, UPDATE, SECONDARY);
+				g_transID += 1;
+				updateKeyValue(key, value, SECONDARY, g_transID, memberNode->addr);
+
 
 				// Step 2: create this key as TERTIARY to next replica
 				if (!(old_replicas_of_key.at(1).nodeAddress == new_replicas_of_key.at(1).nodeAddress)) {
-					update_replica(g_transID, new_replicas_of_key.at(1).nodeAddress, key, value, CREATE, TERTIARY);
+					g_transID += 1;
+					send_message(g_transID, new_replicas_of_key.at(1).nodeAddress, key, value, CREATE, TERTIARY);
 				}
 
 				// Step 3: 	create this key as PRIMARY to previous predecessor
@@ -649,29 +657,33 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 				Address new_1st_predecessor_addr = new_ring[new_1st_predecessor_pos].nodeAddress;
 
 				if (!(old_1st_predecessor_addr == new_1st_predecessor_addr)) {
-					update_replica(g_transID, new_1st_predecessor_addr, key, value, CREATE, PRIMARY);
+					g_transID += 1;
+					send_message(g_transID, new_1st_predecessor_addr, key, value, CREATE, PRIMARY);
 				}	
 				
 			} else if (pos == 2) {
 				// the key is TERTIARY in this node
 
 				// step 1: update this key as TERTIARY to myself
-				update_replica(g_transID, memberNode->addr, key, value, UPDATE, SECONDARY);
+				g_transID += 1;
+				updateKeyValue(key, value, TERTIARY, g_transID, memberNode->addr);
 
 				// step 2: create this key as PRIMARY to 2nd predecessor
 				Address old_2nd_predecessor_addr = ring[old_2nd_predecessor_pos].nodeAddress;
 				Address new_2nd_predecessor_addr = new_ring[new_2nd_predecessor_pos].nodeAddress;
 				
 				if (!(old_2nd_predecessor_addr == new_2nd_predecessor_addr)) {
-					update_replica(g_transID, new_2nd_predecessor_addr, key, value, CREATE, PRIMARY);
+					g_transID += 1;
+					send_message(g_transID, new_2nd_predecessor_addr, key, value, CREATE, PRIMARY);
 				}
 
-				// step 2: create this key as PRIMARY to 2nd predecessor
+				// step 3: create this key as PRIMARY to 2nd predecessor
 				Address old_1st_predecessor_addr = 	ring.at(old_1st_predecessor_pos).nodeAddress;
 				Address new_1st_predecessor_addr = new_ring.at(new_1st_predecessor_pos).nodeAddress;
 				
 				if (!(old_1st_predecessor_addr == new_1st_predecessor_addr)) {
-					update_replica(g_transID, new_1st_predecessor_addr, key, value, CREATE, PRIMARY);
+					g_transID += 1;
+					send_message(g_transID, new_1st_predecessor_addr, key, value, CREATE, PRIMARY);
 				}
 
 			}
@@ -680,6 +692,15 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 
 }
 
+
+
+void MP2Node::send_message(int transID, Address to_addr, string key, string value,  MessageType message_type, ReplicaType replica_type) {
+	
+	if (message_type == CREATE) {
+		Message message = Message(transID, memberNode->addr, message_type, key, value, replica_type);
+		emulNet->ENsend(&memberNode->addr, &to_addr, message.toString());		
+	}
+}
 
 int MP2Node::find_position(Node node, vector<Node> list) {
 
@@ -700,13 +721,6 @@ int MP2Node::find_position(Address addr, vector<Node> list) {
 }
 
 
-
-void MP2Node::update_replica(int transID, Address addr, string key, string value,  MessageType message_type, ReplicaType replica_type) {
-	
-	Message message = Message(transID, memberNode->addr, message_type, key, value, replica_type);
-	emulNet->ENsend(&memberNode->addr, &addr, message.toString());
-}
-
 bool MP2Node::ring_changed(vector<Node> ring1, vector<Node> ring2) {
 
 	if (ring1.size() != ring2.size()) 
@@ -725,9 +739,9 @@ bool MP2Node::ring_changed(vector<Node> ring1, vector<Node> ring2) {
 
 void MP2Node::check_read_operations() {
 	Message* received_msg;
-	string reply_value;
 	int reply_transID;
 	Address reply_from;
+	string key;
 
 	if (read_value_table.size() > 0) {
 
@@ -739,24 +753,28 @@ void MP2Node::check_read_operations() {
 
 				received_msg = new Message(operation_table[reply_transID]);
 				reply_from = received_msg->fromAddr;
-				vector<string> value_received_from_read = read_value_table[reply_transID];
+				key = received_msg->key;
+
+				vector<string> read_values = read_value_table[reply_transID];
 
 				//vector<string> values;
 				bool more_than_1_value = false;
 				string value = "";
 				int counter = 0;
-				for (auto it=value_received_from_read.begin(); it!=value_received_from_read.end(); ++it) {
+				for (auto it=read_values.begin(); it!=read_values.end(); ++it) {
 					if (*it != "") {
 						Entry *entry = new Entry(*it);
 						counter += 1;
+
+						// should have unique value only
 						if (more_than_1_value == false && value == "") {
 							value = entry->value;
 						} else if (value != "" && value != entry->value) {
 							more_than_1_value = true;
-						}
-						
+						}	
 					} 
 				}
+				cout<<"debug: "<<counter;
 
 /*				for (unsigned i = 0; i < values.size(); i++) {
 					if (values[i] == reply_valux`xe)
@@ -765,17 +783,16 @@ void MP2Node::check_read_operations() {
 
 				if (received_msg->type == READ) {
 					if (counter > 1 && value != "" && more_than_1_value == false) {
-						log->logReadSuccess(&reply_from, true, reply_transID, received_msg->key, reply_value);
+						log->logReadSuccess(&reply_from, true, reply_transID, key, value);
 					} else {
-						log->logReadFail(&reply_from, true, reply_transID, received_msg->key);
+						log->logReadFail(&reply_from, true, reply_transID, key);
 					}
 				}
 			}
-		}	
+		}
+		read_value_table.clear();	
 	}
 	
-	
-	read_value_table.clear();
 }
 
 void MP2Node::check_update_operations() {
@@ -783,50 +800,57 @@ void MP2Node::check_update_operations() {
 	int reply_transID;
 	MessageType msg_type;
 	Address reply_from;
+	string key;
+	string value;
 
 	if (result_table.size() > 0) {
 
 		for (auto it = result_table.begin(); it != result_table.end(); ++it) {
 			reply_transID = it->first;
 
+			// if the key is present
 			if (operation_table.find(reply_transID) != operation_table.end()) {
 				
 				received_msg = new Message(operation_table[reply_transID]);
 				msg_type =  received_msg->type;
 				reply_from = received_msg->fromAddr;
+				key = received_msg->key;
+				value = received_msg->value;
 
 				vector<bool> success_message = result_table[reply_transID];
 				int counter = 0;
-				for (unsigned i=0; i < success_message.size(); i++) {
+				for (unsigned i = 0; i < success_message.size(); i++) {
 					if (success_message[i] == true) {
 						counter += 1;
 					}
 				}
-				cout<<"debug: "<< counter <<"\n";
-
+				
 				if (msg_type == CREATE) {
+
 					if (counter > 1)
-						log->logCreateSuccess(&reply_from, true, reply_transID, received_msg->key, received_msg->value);
+						log->logCreateSuccess(&reply_from, true, reply_transID, key, value);
 					else
-						log->logCreateFail(&reply_from, true, reply_transID, received_msg->key, received_msg->value);
+						log->logCreateFail(&reply_from, true, reply_transID, key, value);
 				
 				} else if (msg_type == UPDATE) {
+					cout<<"debug'for update: "<< counter <<"\n";
 					if (counter > 1)
-						log->logUpdateSuccess(&reply_from, true, reply_transID, received_msg->key, received_msg->value);
+						log->logUpdateSuccess(&reply_from, true, reply_transID, key, value);
 					else
-						log->logUpdateFail(&reply_from, true, reply_transID, received_msg->key, received_msg->value);
+						log->logUpdateFail(&reply_from, true, reply_transID, key, value);
 				
 				} else if (msg_type == DELETE) {
 					if (counter > 1)
-						log->logDeleteSuccess(&reply_from, true, reply_transID, received_msg->key);
+						log->logDeleteSuccess(&reply_from, true, reply_transID, key);
 					else
-						log->logDeleteFail(&reply_from, true, reply_transID, received_msg->key);
+						log->logDeleteFail(&reply_from, true, reply_transID, key);
 				}
 			}
 		}
+		result_table.clear();
 	}
 	
-	result_table.clear();
+	
 }
 
 
