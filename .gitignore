@@ -37,4 +37,5 @@
 cmake-build-debug/
 **.log
 
+*
 !*.*
