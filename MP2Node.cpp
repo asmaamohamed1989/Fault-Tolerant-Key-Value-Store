@@ -348,11 +348,17 @@ void MP2Node::checkMessages() {
 	/*
 	 * Declare your local variables here
 	 */
-	Message* msg;
-	Message* reply_message;
-	MessageType msg_type;
+	Message* arrived_msg;
+	MessageType arrived_msg_type;
+	int arrived_transID;
+	string arrived_key;
+	string arrived_value;
+	ReplicaType arrived_replica_type;
+	Address arrived_address;
+
+	Message* reply_msg;
 	bool is_success; 
-	int reply_transID;
+	
 	Address from_addr = getMemberNode()->addr;
 
 	// dequeue all messages and handle them
@@ -369,26 +375,28 @@ void MP2Node::checkMessages() {
 		/*
 		 * Handle the message types here
 		 */
-		msg = new Message(message);
-		msg_type = msg->type;
-		reply_transID = msg->transID;
+		arrived_msg = new Message(message);
+		arrived_msg_type = arrived_msg->type;
+		arrived_transID = arrived_msg->transID;
+		arrived_key = arrived_msg->key;
+		arrived_value = arrived_msg->value;
+		arrived_address = arrived_msg->fromAddr;
 
-		if (msg_type == CREATE) {
+		if (arrived_msg_type == CREATE) {
 
-			is_success = createKeyValue(msg->key, msg->value, msg->replica, reply_transID, from_addr);
-			vector<Node> nodes_have_key = findNodes(msg->key);
+			is_success = createKeyValue(arrived_key, arrived_value, arrived_replica_type, arrived_transID, from_addr);
+			vector<Node> nodes_have_key = findNodes(arrived_key);
+			arrived_replica_type = arrived_msg->replica;
 
-			ReplicaType replica_type = msg->replica;
-
-			if (replica_type == PRIMARY){
+			if (arrived_replica_type == PRIMARY){
 				
-				// add nodes into hasmyreplica
-				for (int i=1; i <= 2; i++) {
+				// add nodes into hasmyreplica nodes if they dont have yet
+				for (int i = 1; i <= 2; i++) {
 					if (find_position(nodes_have_key.at(i), hasMyReplicas) == -1)
 						hasMyReplicas.emplace_back(nodes_have_key.at(i));
 				}
 
-			} else if (replica_type == SECONDARY) {
+			} else if (arrived_replica_type == SECONDARY) {
 
 				if (find_position(nodes_have_key.at(0), haveReplicasOf) == -1) {
 					haveReplicasOf.emplace_back(nodes_have_key.at(0));
@@ -398,64 +406,65 @@ void MP2Node::checkMessages() {
 					hasMyReplicas.emplace_back(nodes_have_key.at(0));
 				}			
 
-			} else {
+			} else if (arrived_replica_type == TERTIARY) {
 
-				for (int i=1; i<=2; i++) {
+				for (int i=0; i<=1; i++) {
 					if (find_position(nodes_have_key.at(i), haveReplicasOf) == -1)
 						haveReplicasOf.emplace_back(nodes_have_key.at(i));
 				}
 			}
 
-			reply_message = new Message(reply_transID , memberNode->addr, REPLY, is_success);
-			emulNet->ENsend(&memberNode->addr, &msg->fromAddr, reply_message->toString());
+			// reply message will have  same transaction ID as the arrival message
+			reply_msg = new Message(arrived_transID, from_addr, REPLY, is_success);
+			emulNet->ENsend(&from_addr, &arrived_address, reply_msg->toString());
 		
-		} else if (msg_type == DELETE) {
+		} else if (arrived_msg_type == DELETE) {
 
-			is_success = deletekey(msg->key, msg->transID);
-			reply_message = new Message(reply_transID, memberNode->addr, REPLY, is_success);
-			emulNet->ENsend(&memberNode->addr, &msg->fromAddr, reply_message->toString());
+			is_success = deletekey(arrived_key, arrived_transID);
+			reply_msg = new Message(arrived_transID, from_addr, REPLY, is_success);
+			emulNet->ENsend(&from_addr, &arrived_address, reply_msg->toString());
 		
-		} else if (msg_type == READ) {
+		} else if (arrived_msg_type == READ) {
 
-			string value = readKey(msg->key, reply_transID);
+			string value = readKey(arrived_key, arrived_transID);
 
 			// reply message of read is different from others
-			reply_message = new Message(reply_transID, memberNode->addr, value);
-			emulNet->ENsend(&memberNode->addr, &msg->fromAddr, reply_message->toString());
+			reply_msg = new Message(arrived_transID, from_addr, value);
+			emulNet->ENsend(&from_addr, &arrived_address, reply_msg->toString());
 			
-		} else if (msg_type == UPDATE) {
+		} else if (arrived_msg_type == UPDATE) {
 
 			// update message has replica type
-			is_success = updateKeyValue(msg->key, msg->value, msg->replica, reply_transID, from_addr);
-			reply_message = new Message(reply_transID, memberNode->addr, REPLY, is_success);
-			emulNet->ENsend(&memberNode->addr, &msg->fromAddr, reply_message->toString());			
+			is_success = updateKeyValue(arrived_key, arrived_value, arrived_replica_type, arrived_transID, from_addr);
+			reply_msg = new Message(arrived_transID, from_addr, REPLY, is_success);
+			emulNet->ENsend(&from_addr, &arrived_address, reply_msg->toString());			
 		
-		} else if (msg_type == REPLY) {
+		} else if (arrived_msg_type == REPLY) {
 
 			// get the success from reply message
-			is_success = msg->success;
+			is_success = arrived_msg->success;
 
 			// key already present
-			if (result_table.find(reply_transID) != result_table.end()) {	
-				result_table[reply_transID].emplace_back(is_success);
+			if (result_table.find(arrived_transID) != result_table.end()) {	
+				result_table[arrived_transID].emplace_back(is_success);
 
 			} else { // key not present yet
 				vector<bool> new_result;
 				new_result.emplace_back(is_success);
-				result_table[reply_transID] = new_result;
+				result_table[arrived_transID] = new_result;
 			}
 
 		} else { // read reply
-			string reply_value = msg->value;
+			string arrived_value = arrived_msg->value;
 
 			// key already present
-			if (read_value_table.find(reply_transID) != read_value_table.end()) {
-				read_value_table[reply_transID].emplace_back(reply_value);
+			if (read_value_table.find(arrived_transID) != read_value_table.end()) {
+				read_value_table[arrived_transID].emplace_back(arrived_value );
 
 			} else { // key not present yet
 				vector<string> new_value;
-				new_value.emplace_back(reply_value);
-				read_value_table[reply_transID] = new_value;
+				new_value.emplace_back(arrived_value);
+				read_value_table[arrived_transID] = new_value;
 			}
 		}
 				
@@ -694,7 +703,7 @@ void MP2Node::stabilizationProtocol(vector<Node> new_ring) {
 
 
 
-void MP2Node::send_message(int transID, Address to_addr, string key, string value,  MessageType message_type, ReplicaType replica_type) {
+void MP2Node::send_message(int transID, Address to_addr, string key, string value, MessageType message_type, ReplicaType replica_type) {
 	
 	if (message_type == CREATE) {
 		Message message = Message(transID, memberNode->addr, message_type, key, value, replica_type);
@@ -833,7 +842,7 @@ void MP2Node::check_update_operations() {
 						log->logCreateFail(&reply_from, true, reply_transID, key, value);
 				
 				} else if (msg_type == UPDATE) {
-					cout<<"debug'for update: "<< counter <<"\n";
+
 					if (counter > 1)
 						log->logUpdateSuccess(&reply_from, true, reply_transID, key, value);
 					else
