@@ -149,6 +149,13 @@ For new feature contribution, please follow the following instruction:
 
 7. Go to your own repo and create a new Pull Request against 'dev' branch
 
+8. To sync your forked repo with my repo
+
+```
+$ git remote add upstream https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store.git
+$ git checkout master
+$ git merge upstream/master
+```
 ---
 Contact
 ---
@@ -157,6 +164,7 @@ Feel free to contact me to discuss any issues, questions, or comments.
 *  Email: vutransingapore@gmail.com
 *  Linkedln: [@vutransingapore](https://www.linkedin.com/in/tranlyvu/)
 *  GitHub: [Tran Ly Vu](https://github.com/tranlyvu)
+*  Blog: [tranlyvu.github.io](https://tranlyvu.github.io/)
 
 ---
 License
