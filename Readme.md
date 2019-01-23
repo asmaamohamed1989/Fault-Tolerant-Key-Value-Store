@@ -1,4 +1,9 @@
-# **Building Fault-Tolerant Key-Value Store**
+# **Building Fault-Tolerant Key-Value Store** [![release][1]][2] [![HitCount][3]][4] 
+[1]: https://img.shields.io/github/release/tranlyvu/Fault-Tolerant-Key-Value-Store.svg
+[2]: https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/releases
+[3]: http://hits.dwyl.io/tranlyvu/Fault-Tolerant-Key-Value-Store.svg
+[4]: http://hits.dwyl.io/tranlyvu/Fault-Tolerant-Key-Value-Store
+
 
 Building a distributed Fault-Tolerant Key-Value Store on nodes running membership protocol.
 
