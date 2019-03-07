@@ -156,6 +156,13 @@ $ git remote add upstream https://github.com/tranlyvu/Fault-Tolerant-Key-Value-S
 $ git checkout master
 $ git merge upstream/master
 ```
+
+---
+Hall of Fame
+---
+
+
+
 ---
 Contact
 ---
