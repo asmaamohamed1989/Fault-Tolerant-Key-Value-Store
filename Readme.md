@@ -117,8 +117,8 @@ Contribution
 Please follow [contribution instruction](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CONTRIBUTING.md) and [code of conduct](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CODE-OF-CONDUCT.md)
 
 ### [List of contributors](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CONTRIBUTORS.md) [![Open Source Helpers][9]][10]
-[9]: https://www.codetriage.com/tranlyvu/Fault-Tolerant-Key-Value-Store/badges/users.svg
-[10]: https://www.codetriage.com/tranlyvu/Fault-Tolerant-Key-Value-Store
+[9]: https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store/badges/users.svg
+[10]: https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store
 
 ---
 Hall of Fame 
