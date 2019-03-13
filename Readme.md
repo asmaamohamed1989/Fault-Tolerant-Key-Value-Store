@@ -1,9 +1,12 @@
-# **Building Fault-Tolerant Key-Value Store** [![release][1]][2] [![HitCount][3]][4] 
+# **Building Fault-Tolerant Key-Value Store** [![release][1]][2] [![HitCount][3]][4] [![HitCount][5]][6] [![HitCount][7]][8] 
 [1]: https://img.shields.io/github/release/tranlyvu/Fault-Tolerant-Key-Value-Store.svg
 [2]: https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/releases
 [3]: http://hits.dwyl.io/tranlyvu/Fault-Tolerant-Key-Value-Store.svg
 [4]: http://hits.dwyl.io/tranlyvu/Fault-Tolerant-Key-Value-Store
-
+[5]: http://githubbadges.com/star.svg?user=tranlyvu&repo=Fault-Tolerant-Key-Value-Store&style=default
+[6]: https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store
+[7]: http://githubbadges.com/fork.svg?user=tranlyvu&repo=Fault-Tolerant-Key-Value-Store&style=default
+[8]: https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/fork
 
 Building a distributed Fault-Tolerant Key-Value Store on nodes running membership protocol.
 
@@ -19,8 +22,8 @@ Table of contents
 2. [Project Architecture](#Project-Architecture)
 3. [Usage](#Usage)
 4. [Real-world application](#Real-world-application)
-5. [Release History](#Release-History)
-6. [Contribution](#Contribution)
+5. [Contribution](#Contribution)
+6. [Release History](#Release-History)
 7. [Contact](#Contact)
 8. [License](#License)
 
@@ -106,6 +109,23 @@ This is an experimental implementation project and under heavy development, I do
 
 However, here are some ideas to integrate this into real-world application: The MP has been designed for use of porting to a real distributed system. Start by changing the EmulNet layer and then perhaps using multithreading.
 
+
+---
+Contribution
+---
+
+Please follow [contribution instruction](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CONTRIBUTING.md) and [code of conduct](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CODE-OF-CONDUCT.md)
+
+### [List of contributors](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CONTRIBUTORS.md) [![Open Source Helpers][9]][10]
+[9]: https://www.codetriage.com/tranlyvu/Fault-Tolerant-Key-Value-Store/badges/users.svg
+[10]: https://www.codetriage.com/tranlyvu/Fault-Tolerant-Key-Value-Store
+
+---
+Hall of Fame 
+---
+
+[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/0)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/0)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/1)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/1)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/2)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/2)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/3)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/3)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/4)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/4)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/5)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/5)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/6)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/6)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/7)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/7)
+
 ---
 Release History
 ---
@@ -118,54 +138,10 @@ Release History
     * To do: fix segmentation fault
 
 ---
-Contribution
+Contact [![Say Thank][11]][12]
 ---
-
-Contributions are welcome! For bug reports or requests please submit an [issue](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/issues).
-
-For new feature contribution, please follow the following instruction:
-
-1. Fork the repo https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store.git to your own github
-
-2. Clone from your own repo
-
-`$ git clone https://github.com/<your name>/Fault-Tolerant-Key-Value-Store.git`
-
-3. Make sure you are at dev branch 
-
-`$ git checkout dev && git pull`
-
-4. Create your feature/bug-fix branch
-
-`$ git checkout -b <feature/bug>/<branch-name>`
-
-5. Commit your changes 
-
-`$ git commit -am 'Add some new feature'`
-
-6. Push to the branch 
-
-`$ git push`
-
-7. Go to your own repo and create a new Pull Request against 'dev' branch
-
-8. To sync your forked repo with my repo
-
-```
-$ git remote add upstream https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store.git
-$ git checkout master
-$ git merge upstream/master
-```
-
----
-Hall of Fame
----
-
-[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/0)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/0)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/1)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/1)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/2)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/2)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/3)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/3)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/4)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/4)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/5)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/5)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/6)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/6)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/7)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/7)
-
----
-Contact
----
+[11]: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg
+[12]: https://saythanks.io/to/tranlyvu
 
 Feel free to contact me to discuss any issues, questions, or comments.
 *  Email: vutransingapore@gmail.com
