@@ -112,6 +112,7 @@ However, here are some ideas to integrate this into real-world application: The 
 
 ---
 Contribution [![Open Source Helpers][9]][10]
+
 [9]: https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store/badges/users.svg
 [10]: https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store
 ---
