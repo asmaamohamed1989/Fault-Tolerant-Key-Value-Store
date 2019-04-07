@@ -111,10 +111,7 @@ However, here are some ideas to integrate this into real-world application: The 
 
 
 ---
-Contribution [![Open Source Helpers][9]][10]
-
-[9]: https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store/badges/users.svg
-[10]: https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store
+Contribution [![Open Source Helpers](https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store/badges/users.svg)](https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store)
 ---
 
 Please follow [contribution instruction](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CONTRIBUTING.md) and [code of conduct](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CODE-OF-CONDUCT.md)
