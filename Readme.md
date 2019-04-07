@@ -1,16 +1,18 @@
-# **Building Fault-Tolerant Key-Value Store** [![release][1]][2] [![HitCount][3]][4] [![HitCount][5]][6] [![HitCount][7]][8] 
-[1]: https://img.shields.io/github/release/tranlyvu/Fault-Tolerant-Key-Value-Store.svg
-[2]: https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/releases
-[3]: http://hits.dwyl.io/tranlyvu/Fault-Tolerant-Key-Value-Store.svg
-[4]: http://hits.dwyl.io/tranlyvu/Fault-Tolerant-Key-Value-Store
-[5]: http://githubbadges.com/star.svg?user=tranlyvu&repo=Fault-Tolerant-Key-Value-Store&style=default
-[6]: https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store
-[7]: http://githubbadges.com/fork.svg?user=tranlyvu&repo=Fault-Tolerant-Key-Value-Store&style=default
-[8]: https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/fork
+# **Building Fault-Tolerant Key-Value Store**
+
+<p align="center">
+	<a href="https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/releases"><img src="https://img.shields.io/github/release/tranlyvu/Fault-Tolerant-Key-Value-Store.svg"></a>
+    <a href="https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store"><img src="http://githubbadges.com/star.svg?user=tranlyvu&repo=Fault-Tolerant-Key-Value-Store&style=default"></a>
+    <a href="https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/fork"><img src="http://githubbadges.com/fork.svg?user=tranlyvu&repo=Fault-Tolerant-Key-Value-Store&style=default"></a>
+</p>
+
+---
 
 Building a distributed Fault-Tolerant Key-Value Store on nodes running membership protocol.
 
 The project was forked from University of Illinois at Urbana-Champaign' [Cloud Computing Specialization](https://www.coursera.org/specializations/cloud-computing) programming assignment.
+
+If you like this project, feel fee to leave a few words of appreciation here [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/tranlyvu)
 
 <img src="img/demo.jpg" width="480" alt="Combined Image" />
 
@@ -23,9 +25,7 @@ Table of contents
 3. [Usage](#Usage)
 4. [Real-world application](#Real-world-application)
 5. [Contribution](#Contribution)
-6. [Release History](#Release-History)
-7. [Contact](#Contact)
-8. [License](#License)
+6. [License](#License)
 
 ---
 Project Specification
@@ -111,43 +111,22 @@ However, here are some ideas to integrate this into real-world application: The 
 
 
 ---
-Contribution
+Contribution [![Open Source Helpers][9]][10]
+[9]: https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store/badges/users.svg
+[10]: https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store
 ---
 
 Please follow [contribution instruction](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CONTRIBUTING.md) and [code of conduct](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CODE-OF-CONDUCT.md)
 
-### [List of contributors](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CONTRIBUTORS.md) [![Open Source Helpers][9]][10]
-[9]: https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store/badges/users.svg
-[10]: https://www.codetriage.com/tranlyvu/fault-tolerant-key-value-store
+Please check out the [list of issues](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/issues) that required helps.
 
----
-Hall of Fame 
----
+### Appreciation
+
+Feel free to add your name into the [list of contributors](https://github.com/tranlyvu/Fault-Tolerant-Key-Value-Store/blob/dev/CONTRIBUTORS.md). You will automatically be inducted into Hall of Fame as a way to show my appreciation for your contributions.
+
+#### Hall of Fame
 
 [![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/0)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/0)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/1)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/1)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/2)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/2)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/3)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/3)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/4)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/4)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/5)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/5)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/6)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/6)[![](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/images/7)](https://sourcerer.io/fame/tranlyvu/tranlyvu/Fault-Tolerant-Key-Value-Store/links/7)
-
----
-Release History
----
-
-* v1.0.0 (23 Dec 2018)
-    * First official release
-    * Supported CRUD operations
-    * Provided client and server API
-    * To to: fix stabilization protocol
-    * To do: fix segmentation fault
-
----
-Contact [![Say Thank][11]][12]
----
-[11]: https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg
-[12]: https://saythanks.io/to/tranlyvu
-
-Feel free to contact me to discuss any issues, questions, or comments.
-*  Email: vutransingapore@gmail.com
-*  Linkedln: [@vutransingapore](https://www.linkedin.com/in/tranlyvu/)
-*  GitHub: [Tran Ly Vu](https://github.com/tranlyvu)
-*  Blog: [tranlyvu.github.io](https://tranlyvu.github.io/)
 
 ---
 License
